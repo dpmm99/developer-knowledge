@@ -1,0 +1,324 @@
+<html>
+<head>
+
+<style>
+h2 {
+	margin-left: 8px;
+	display: inline-block;
+}
+
+.children {
+	margin-left: 1em;
+}
+
+.accordion > :not(.children) { /*Any direct descendants of the accordion container, except the children list, have the pointer*/
+	/*cursor: pointer;*/
+}
+
+.accordion.collapsed .children {
+	display: none;
+}
+
+.accordion > .arrow:before {
+	cursor: pointer;
+	content: '\25bc';
+}
+.accordion.collapsed > .arrow:before {
+	cursor: pointer;
+	content: '\25ba';
+}
+
+.pop-button {
+	border-radius: 50%;
+	background-color: #59f;
+	color: #fff;
+	text-decoration: none;
+	padding: 0 6px;
+}
+
+.pop-panel {
+	position: fixed;
+	z-index: 2;
+	background-color: #eee;
+	border: 1px solid black;
+	border-radius: 10px;
+	padding: 8px;
+	box-sizing: border-box;
+}
+
+.pop-backdrop {
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 100vw;
+	height: 100vh;
+	z-index: 1;
+}
+</style>
+</head>
+<body>
+
+<h1>Facts, Ideas, and Principles for Becoming Your Best (Software Developer) Self</h1>
+<p>There is a vast amount of knowledge in the world, but much of it is sparsely distributed through wordy blog entries, articles, and books. The authors of these writings, as good authors tend to do, offer many examples and in-depth discussion of the concepts. However, most compositions cover a limited selection of concepts within the composition's already limited scope. This is not conducive to already knowledgeable individuals refreshing their knowledge or looking for realizations that have thus far escaped their judgment, nor does it function as guidance for novices seeking direction. As such, I offer this dense collection of a broad variety of facts, ideas, and principles in the hope that it can be a powerful, brief reference for experienced software developers (and related individuals) in their journey to become masters of all things surrounding their profession.</p>
+<p>This page provides checkboxes to record your progress as you read individual items. The date and time of the moment you check each checkbox is saved in local storage. Because one can read through the items at any level or read the high-level items in one pass and the lower-level ones in another pass, consider each checkbox to apply only to the text directly adjacent to it.</p>
+<section id="masternode"></section>
+
+<script>
+/**
+ * Enum for possible appearances of a KnowledgeNode
+ */
+const DisplayMode = {
+	/**
+	 * Display as a single item. Can have POP children. <a> nodes with data-index are replaced by the child with the corresponding index.
+	 */
+	ITEM: "item",
+	/**
+	 * Display as a general description of an accordion list of items. Can have ITEM and ACCORDION children, which are placed in the node with the class "children".
+	 * The first DOM element in the content is treated as the toggle button.
+	 */
+	ACCORDION: "accordion",
+	/**
+	 * Display as a tooltip. Cannot have children.
+	 */
+	POP: "pop"
+}
+
+const MAX_DEPTH = 4;
+
+class KnowledgeNode {
+	/**
+	 * @param {int} id Permanent unique ID for this knowledge node. These should not change between updates, and there should be no duplicates.
+	 * @param {DisplayMode} displayMode How this item should be displayed (options are "item", "accordion", "pop")
+	 * @param {string} content HTML content to display
+	 * @param {Array} children Array of KnowledgeNodes that this one contains (which would be checked if you check this node, and this node would be checked if you check all the children)
+	 */
+	constructor(id, displayMode, content, children) {
+		this.id = id;
+		this.displayMode = displayMode;
+		this.content = content;
+		this.children = children || [];
+		this.checked = false;
+		
+		//TODO: Assert that this node's ID differs from all previously created nodes (optionally: unless their contents and children match).
+	}
+	
+	/**
+	 * Creates and returns a DOM node for displaying this KnowledgeNode and all its descendants
+	 * @param {int} depth Recursion depth (for debug assertion)
+	 */
+	toNode(depth = 0) {
+		console.assert(depth <= MAX_DEPTH, "Exceeded max depth when constructing node for KnowledgeNode ID " + this.id);
+		//Generate a DOM node depending on displayMode
+		//TODO: You might store all DOM nodes generated for this KnowledgeNode in an array so that they can all update simultaneously when one does. Like a watch/reactor, but without a nasty and slow framework!
+		switch (this.displayMode) {
+			case DisplayMode.ITEM:
+			var item = document.createElement("p");
+			item.innerHTML = this.content;
+			
+			var referencedChildren = this.children.map(p => 0); //Parallel to this.children; each element indicates the reference count for the child with the same index
+			var pops = item.getElementsByTagName("a");
+			for (var x = 0; x < pops.length; x++) {
+				if (pops[x].dataset.index !== undefined) { //Check for data-index. If it has it, replace that element with the child whose index matches data-index.
+					var idx = parseInt(pops[x].dataset.index);
+					referencedChildren[idx]++; //Increment reference count for assertion
+					console.assert(idx >= 0, "Negative or non-numeric data-index found ('" + pops[x].dataset.index + "') in KnowledgeNode ID " + this.id);
+					console.assert(idx < this.children.length, "Found out-of-bounds data-index (" + idx + "; should be less than " + this.children.length + ") in KnowledgeNode ID " + this.id);
+					
+					pops[x].replaceWith(this.children[idx].toNode(depth + 1));
+				} else console.assert(pops[x].href || pops[x].onclick, "Found an 'a' tag with neither a href nor an onclick event handler in KnowledgeNode ID " + this.id); //Probably a mistake
+			}
+			
+			console.assert(referencedChildren.every(p => p > 0), "Unreferenced child " + referencedChildren.findIndex(p => p == 0) + " in KnowledgeNode ID " + this.id);
+			console.assert(referencedChildren.every(p => p <= 1), "Repeat data-index " + referencedChildren.findIndex(p => p > 1) + " in KnowledgeNode ID " + this.id);
+			
+			//Checkbox
+			//item.insertBefore(this.makeCheckbox(), item.firstChild);
+			item.appendChild(this.makeCheckbox());
+			return item;
+			break;
+			
+			case DisplayMode.ACCORDION:
+			var accordion = document.createElement("div");
+			accordion.classList.add("accordion");
+			accordion.classList.add("collapsed"); //TODO: Might want to expand to show all not-already-checked nodes
+			accordion.innerHTML = this.content;
+			
+			var childContainer = accordion.getElementsByClassName("children")[0];
+			if (!childContainer) { //If there isn't a container specified by the user, just append one.
+				childContainer = document.createElement("div");
+				childContainer.classList.add("children");
+				accordion.appendChild(childContainer);
+			}
+			
+			console.assert(this.children.length > 0, "Accordion nodes should have children, but this one does not; KnowledgeNode ID " + this.id);
+			for (var x = 0; x < this.children.length; x++) {
+				console.assert(this.children[x].displayMode != DisplayMode.POP, "Accordion nodes should not have Pop children; KnowledgeNode ID " + this.id);
+				childContainer.appendChild(this.children[x].toNode(depth + 1));
+			}
+			//TODO: For better startup performance if we have a ton of nodes in accordions, we might just generate the child DOM when the accordion expands and maybe delete the child DOM when the accordion collapses.
+			
+			//Accordion toggle behavior
+			//Make sure the first node is an element
+			//if (accordion.firstChild != accordion.children[0]) {
+			//	var span = document.createElement("span");
+			//	span.appendChild(accordion.firstChild); //Move the text into the span
+			//	accordion.insertBefore(span, accordion.firstChild); //Move the span into the accordion
+			//}
+			//accordion.children[0].onclick = (event) => toggleAccordion(event);
+			
+			//Checkbox
+			//accordion.insertBefore(this.makeCheckbox(), accordion.firstChild);
+			accordion.appendChild(this.makeCheckbox());
+			//TODO: Make the text into a label and move the checkbox into the label
+			
+			//Accordion expansion
+			var arrow = document.createElement("span");
+			arrow.classList.add("arrow");
+			arrow.onclick = (event) => toggleAccordion(event);
+			accordion.insertBefore(arrow, accordion.firstChild);
+			
+			return accordion;
+			break;
+			
+			case DisplayMode.POP:
+			console.assert(this.children.length == 0, "Pop nodes should not have children; KnowledgeNode ID " + this.id);
+			
+			var pop = document.createElement("a");
+			pop.innerText = "?";
+			pop.classList.add("pop-button");
+			pop.onclick = pop.onmouseenter = (event) => popOpen(event, this);
+			
+			return pop;
+			break;
+			
+		}
+	}
+	
+	/**
+	 * Response to the checkbox being toggled directly by the user; sets the internal state of this checkbox and all its descendants
+	 * @param {bool} checked True if the checkbox was just checked; false if it was just unchecked
+	 */
+	onToggleByUser(checked) {
+		this.checked = checked ? new Date() : null; //Save the time it was checked or nullify if it was unchecked.
+		//TODO: Make all the checkboxes for this KnowledgeNode match the event.target DOM element. (May not be necessary if we limit repeats to only Pop nodes, as their checkboxes are generated upon mouse-enter / click.)
+	}
+	
+	/**
+	 * Create a DOM input node as a checkbox for this KnowledgeNode. The checkbox's initial state depends on this.checked.
+	 */
+	makeCheckbox() {
+		var chk = document.createElement("input");
+		chk.type = "checkbox";
+		chk.checked = this.checked;
+		chk.onclick = () => { this.onToggleByUser(chk.checked) };
+		return chk;
+	}
+}
+
+function toggleAccordion(event) {
+	event.target.parentNode.classList.toggle("collapsed");
+}
+
+function popOpen(event, knowledgeNode) {
+	//Make a pop-panel and pop-backdrop on the body.
+	var backdrop = document.createElement("div");
+	backdrop.classList.add("pop-backdrop");
+	
+	var panel = document.createElement("div");
+	panel.classList.add("pop-panel");
+	panel.innerHTML = knowledgeNode.content;
+	
+	panel.insertBefore(knowledgeNode.makeCheckbox(), panel.firstChild);
+	
+	document.body.appendChild(backdrop);
+	document.body.appendChild(panel);
+	
+	panel.onmouseleave = backdrop.onclick = () => { panel.remove(); backdrop.remove(); };	
+	
+	//Make sure the width is no greater than 8x the initial height (for decent proportioning--the final aspect ratio will be much less than 8:1) and no greater than the width of the viewport.
+	panel.style.width = Math.min(panel.offsetHeight * 8, Math.min(document.body.clientWidth, panel.offsetWidth)) + "px";
+	panel.style.left = Math.max(0, Math.min(event.target.offsetLeft - 10 /*pop-panel left padding*/, document.body.clientWidth - panel.offsetWidth)) + "px";
+	panel.style.top = Math.max(0, Math.min(event.target.offsetTop - 10 /*pop-panel top padding*/, document.body.clientHeight - panel.offsetHeight)) + "px";
+}
+
+//Startup code
+(function init() {
+	//Highest used ID: 112
+	
+	//Declarations for reused KnowledgeNodes
+	var creatingAwarenessPop;
+	
+	var topNodes = [
+		new KnowledgeNode(0, DisplayMode.ACCORDION, "<h2>Teamwork</h2><section class='children'></section>", [
+			new KnowledgeNode(100, DisplayMode.ACCORDION, "Be slow to cast blame.", [
+				new KnowledgeNode(104, DisplayMode.ITEM, "Don't blame the user before blaming the design <a data-index='0'></a>.", [
+					new KnowledgeNode(105, DisplayMode.POP, "<a href='https://www.amazon.com/Design-Everyday-Things-Revised-Expanded-ebook/dp/B00E257T6C'>The Design of Everyday Things</a>")]),
+				new KnowledgeNode(106, DisplayMode.ITEM, "Admit your mistakes for the sake of process improvement and learning <a data-index='0'></a>.", [
+					creatingAwarenessPop = new KnowledgeNode(107, DisplayMode.POP, "<a href='https://accu.org/index.php/journals/1436'>Creating Awareness</a>")]),
+				new KnowledgeNode(108, DisplayMode.ITEM, "Even if you cast blame only to inject humor, ensure that you also quickly follow up with sharing the blame or pointing out that mistakes can happen to anyone, because your jokes will be taken personally and can quickly lead to a hostile environment.")
+			]),
+			new KnowledgeNode(109, DisplayMode.ACCORDION, "Keep a document of lessons learned.", [
+				new KnowledgeNode(110, DisplayMode.ITEM, "Log everything you can, because without data, proper studies are impossible. <a data-index='0'></a>", [creatingAwarenessPop]),
+				new KnowledgeNode(111, DisplayMode.ITEM, "Schools only have so much time, authors only have so much energy, and humans only have so much memory and so much they can spontaneously recall and teach you about."),
+				new KnowledgeNode(112, DisplayMode.ITEM, "A good document of lessons learned could rapidly teach a young developer lessons that they otherwise may never learn or may learn only after many years of experience, as well as reminding you of lessons you once learned and may have forgotten.")
+			])
+		]), 
+		new KnowledgeNode(1, DisplayMode.ACCORDION, "<h2>Leadership</h2><section class='children'></section>", [
+			new KnowledgeNode(101, DisplayMode.ITEM, "Be nice to your underlings, but not <i>too</i> nice.")
+		]), 
+		new KnowledgeNode(2, DisplayMode.ACCORDION, "<h2>Design</h2><section class='children'></section>", [
+			new KnowledgeNode(102, DisplayMode.ITEM, "Read a book <a data-index='0'></a> for best results.", [
+				new KnowledgeNode(103, DisplayMode.POP, "I recommend <a href='https://www.amazon.com/Design-Everyday-Things-Revised-Expanded-ebook/dp/B00E257T6C'>The Design of Everyday Things</a>. This is a wordy blurb because I like blurbs that are very wordy and extremely long and paragraph-like. It's entirely possible that tooltips of this nature could be very long like this one, and so I need to test to make sure that such long tooltips look acceptable.")
+			])
+		])
+	];
+	
+	//Add the major section nodes to the body
+	var masterNode = document.getElementById("masternode");
+	for (var x = 0; x < topNodes.length; x++) masterNode.appendChild(topNodes[x].toNode());
+})();
+
+//Rule: references you have to pay for should always be listed last.
+
+/*
+Software development is as much dealing with human psychology, such as preventing mistakes, as it is writing software. A good developer answers politely, deflects subtly, plays the politics game with the customer's best interests in mind, and convinces imperfect managers of a good idea by making them think it was their idea, among many, many other things. Being a great developer requires considering the human aspects of yourself, your teammates, your manager, and the users.
+Knowing how to lead the team helps you be a part of the team. You can even memorize your own set of management phrases and praises such as, "That's an excellent idea. Like all ideas, however, it does have cons--can you tell us about the negatives and why you believe this idea will work well despite them?" and "If you would, please teach me and help me understand this." Praise others' creativity or work ethic or at least show appreciation for their efforts when you're tempted to criticize their work.
+
+Political correctness is intended to reduce the unnecessary involvement of negative emotions.
+
+Development processes are designed to reduce human mistakes. Automation is designed to prevent human mistakes. Type safety and other guarantees (like those central to the design philosophy of languages like Rust and Go) identify mistakes sooner.
+People hire based on technologies despite that what programmers do best is learn new tech. As such, knowing old languages like COBOL can land you a high-paid position.
+All decisions come with trade-offs. New, immature technologies tend to be inefficient, and most technologies don't advertise their glaring flaws. Things that improve maintainability in one way can also hurt it worse in another way. [See quality attribute matrix for general examples]
+Maintaining a healthy body and mind is paramount to being a good developer, and that requires sleep, exercise, nutrition, and ergonomics. Being a considerate person is extremely important, too (see assertion #1 above).
+Guidelines, principles, and best practices are not rules; they're not perfect and are not meant to be the best answer in every situation. What's always best is to weigh your options in context. The same applies for tools, technologies, and methodologies. Additionally, they're very hard to study, so you can't be sure how much they help solely based on speculation of their pros and cons [https://accu.org/index.php/journals/1547]. [Some discussion of the dubious benefits of pair programming: https://accu.org/index.php/journals/1983] [Some discussion of the difficulties involved in agile: https://accu.org/index.php/journals/2003]
+Best practices and principles include KISS [Keep It Stupid-Simple], SOLID [Single Responsibility; Open/Closed; Liskov Substitution; Interface Segregation; Dependency Inversion], DRY [Don't Repeat Yourself] [Cases to ignore DRY: https://accu.org/index.php/journals/2662], consistency, loose coupling (and dependency injection), leaky abstractions [https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions/], logic and documentation locality... Facts include "nothing is as simple as it seems." [https://www.joelonsoftware.com/2002/03/04/nothing-is-as-simple-as-it-seems/]
+New technologies give you new ways of thinking, so try out a lot of languages and libraries. MATLAB/OCTAVE work with vector operations (SIMD--single instruction multiple data) so you often don't have to loop (see also: LINQ, map, reduce); functional languages like Haskell make you rely less on the program state and more on passing data around; declarative languages like VHDL give you a chance to break out of the sequence mindset.
+Read some books (The Design of Everyday Things Revised and Expanded Edition, https://github.com/accu-org/essential-books/wiki ), and blogs (ITHare.com, GamaSutra, ACCU.org journals, https://devblogs.microsoft.com/oldnewthing/, maybe JoelOnSoftware.com) at different points in your life, not just technology-specific tutorials and articles.
+Make improvement your responsibility. If you join a group and see that they have no overview-level documentation or list of common misunderstandings or anything to help newcomers get up to speed, it'll be helpful to everyone if you choose to be the one to create it.
+Avoid interruptions. Every interruption resets your working memory, leading to a loss of 15-30 minutes of productivity.
+Triple your initial estimates [http://programs.clearerthinking.org/how_well_anchored_are_your_estimates.html] or estimate with a confidence interval [https://accu.org/index.php/journals/1836]. Only make estimates for your own projects [https://www.joelonsoftware.com/2007/10/26/evidence-based-scheduling/], and break down projects that are more than a few days long to estimate them better. It's much easier to estimate how long something will take once you've actually thought about the challenges involved, but your estimates still need padded for bugs, interruptions, and test time.
+Don't try to get even close to 100% automated test coverage in a non-safety-critical application. [http://ithare.com/too-much-unit-testing-is-detrimental-for-code-quality/] [http://ithare.com/testing-my-personal-take-on-testing-including-unit-testing-and-atddbdd/]
+When writing code, especially if you don't have a formal design prepared in advance, write to-do comments explaining the process. You can take off the "TODO" as you complete these, and they become documentation of the intention behind sections of your code. This also serves as a guide and helps if you get interrupted or forget what you were doing.
+Brainstorming consists of coming up with ideas and leaving their evaluation for later. [https://www.managers.org.uk/~/media/Files/Campus%20CMI/Checklists%20PDP/Brainstorming.ashx]
+When you find a need to optimize your code (which requires first benchmarking to identify the slowest parts), first try reducing the run time complexity of the algorithms, such as changing a search into a hash-based lookup. If that proves insufficient, you may have to sacrifice clean, maintainable code for optimization. Compilers, particularly those for more mature programming languages, are very smart and capable of optimizing in a lot of ways, so you probably won't get anything out of simple changes [http://ithare.com/the-importance-of-back-of-envelope-estimates/]. However, compilers do not have problem domain knowledge and are restricted from performing some optimizations due to their general-purpose nature. In some cases, changing a class to a struct may result in a speed increase because it can increase cache locality and reduce redirection. Compilers for less mature languages may be unable to perform common optimizations like loop interchange and tail recursion. [https://en.wikipedia.org/wiki/Optimizing_compiler] [http://ithare.com/optimizing-big-number-arithmetic-without-sse/]
+Fix bugs before implementing new features. Perform a proper root-cause analysis. Bugs can have hard-to-realize underlying causes that could affect new features. Their effects on other existing features could also go unnoticed.
+If someone questions a piece of code, add a comment addressing their concern (or rephrase an existing comment if it helps), because chances are good someone else will question it for the same reason eventually.
+**Metrics
+**Requirements elicitation (ambiguity is the greatest evil), requirements documents, requirements tracking
+**Job hunting
+**Anti-patterns
+**Accessibility (colorblind, weak vision, blind, deaf)
+**Globalization (language, encodings, decimals and commas)
+**Bonus: famous catch phrases. ITHare: Your Mileage May Vary. Lucian Radu Teodorescu (Do Repeat Yourself on ACCU): Don't Overdo It.
+Automate everything that reasonably can be automated, such as pulling the code and all the tools and dependencies (which helps new team members get up to speed), building, test execution (which can be run during check-in), code formatting (which can be run constantly or during the build process), static analysis, and publishing (including packaging resources). If it takes more than two tasks, it's probably too much work. This acts as documentation, reducing unspoken knowledge.
+Think about everything.
+*/
+
+//TODO: Allow accordion subsets; link all references that point to the same page (like a:visited but permanent); save the date/time of when you check a box (nullify if you uncheck) and not just the state of the box
+//TODO: Use permanent storage to store the state of all your checkboxes
+//TODO: Allow downloading + restoring the state of all your checkboxes (these features together, from the user's perspective, roughly equate to using a database while maintaining purely-local functionality for guaranteed privacy and offline use)
+//TODO: Host this document on GitHub and use http://htmlpreview.github.com/ or http://htmlpreview.github.com/?full-URL-here to display the file from my website.
+//Wishlist: Voting, sorting, and filtering. If I show them in random order until there are over 100 user votes on the importance of each of the items, then I can be temporarily confident that it's not a popularity contest (say, because I had a fixed order, most people would only read the first few items) or chance ordering.
+</script>
+</body>
+</html>
