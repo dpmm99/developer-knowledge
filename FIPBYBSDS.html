@@ -59,7 +59,7 @@ h2 {
 <body>
 
 <h1>Facts, Ideas, and Principles for Becoming Your Best (Software Developer) Self</h1>
-<p>There is a vast amount of knowledge in the world, but much of it is sparsely distributed through wordy blog entries, articles, and books. The authors of these writings, as good authors tend to do, offer many examples and in-depth discussion of the concepts. However, most compositions cover a limited selection of concepts within the composition's already limited scope. This is not conducive to already knowledgeable individuals refreshing their knowledge or looking for realizations that have thus far escaped their judgment, nor does it function as guidance for novices seeking direction. As such, I offer this dense collection of a broad variety of facts, ideas, and principles in the hope that it can be a powerful, brief reference for experienced software developers (and related individuals) in their journey to become masters of all things surrounding their profession.</p>
+<p>There is a vast amount of knowledge in the world, but much of it is sparsely distributed through wordy blog entries, articles, and books. The authors of these writings, as good authors tend to do, offer many examples and in-depth discussion of the concepts. However, most compositions cover a limited selection of concepts within the composition's already limited scope. This is not conducive to already knowledgeable individuals refreshing their knowledge or looking for realizations that have thus far escaped their judgment, nor does it function as guidance for novices seeking direction. As such, I offer this dense collection of a broad variety of facts, ideas, and principles in the hope that it can be a powerful, concise reference for experienced software developers (and related individuals) in their journey to become masters of all things surrounding their profession.</p>
 <p>This page provides checkboxes to record your progress as you read individual items. The date and time of the moment you check each checkbox is saved in local storage. Because one can read through the items at any level or read the high-level items in one pass and the lower-level ones in another pass, consider each checkbox to apply only to the text directly adjacent to it.</p>
 <section id="masternode"></section>
 
@@ -201,6 +201,7 @@ class KnowledgeNode {
 	onToggleByUser(checked) {
 		this.checked = checked ? new Date() : null; //Save the time it was checked or nullify if it was unchecked.
 		//TODO: Make all the checkboxes for this KnowledgeNode match the event.target DOM element. (May not be necessary if we limit repeats to only Pop nodes, as their checkboxes are generated upon mouse-enter / click.)
+		//TODO: I do want to allow repeat non-Pop nodes, though, because mutually exclusive categories don't work as well as tags in reality.
 	}
 	
 	/**
@@ -243,13 +244,16 @@ function popOpen(event, knowledgeNode) {
 
 //Startup code
 (function init() {
-	//Highest used ID: 112
-	
 	//Declarations for reused KnowledgeNodes
 	var creatingAwarenessPop;
 	
 	var topNodes = [
 		new KnowledgeNode(0, DisplayMode.ACCORDION, "<h2>Teamwork</h2><section class='children'></section>", [
+			new KnowledgeNode(113, DisplayMode.ACCORDION, "Software development is as much dealing with human psychology, such as preventing mistakes, as it is writing software.", [
+				new KnowledgeNode(123, DisplayMode.ITEM, "Development processes are designed to reduce human mistakes."),
+				new KnowledgeNode(124, DisplayMode.ITEM, "Automation is designed to prevent human mistakes."),
+				new KnowledgeNode(125, DisplayMode.ITEM, "Type safety and other guarantees (like those central to the design philosophy of languages like Rust and Go) identify mistakes sooner.")
+			]),
 			new KnowledgeNode(100, DisplayMode.ACCORDION, "Be slow to cast blame.", [
 				new KnowledgeNode(104, DisplayMode.ITEM, "Don't blame the user before blaming the design <a data-index='0'></a>.", [
 					new KnowledgeNode(105, DisplayMode.POP, "<a href='https://www.amazon.com/Design-Everyday-Things-Revised-Expanded-ebook/dp/B00E257T6C'>The Design of Everyday Things</a>")]),
@@ -259,12 +263,24 @@ function popOpen(event, knowledgeNode) {
 			]),
 			new KnowledgeNode(109, DisplayMode.ACCORDION, "Keep a document of lessons learned.", [
 				new KnowledgeNode(110, DisplayMode.ITEM, "Log everything you can, because without data, proper studies are impossible. <a data-index='0'></a>", [creatingAwarenessPop]),
-				new KnowledgeNode(111, DisplayMode.ITEM, "Schools only have so much time, authors only have so much energy, and humans only have so much memory and so much they can spontaneously recall and teach you about."),
+				new KnowledgeNode(111, DisplayMode.ITEM, "Checklists and 'lessons learned' documents help because schools/authors/humans only have so much time/energy/memory and so much they can spontaneously recall or teach you about."),
 				new KnowledgeNode(112, DisplayMode.ITEM, "A good document of lessons learned could rapidly teach a young developer lessons that they otherwise may never learn or may learn only after many years of experience, as well as reminding you of lessons you once learned and may have forgotten.")
-			])
+			]),
+			new KnowledgeNode(114, DisplayMode.ITEM, "A good developer is polite and considerate in the line of duty. <a data-index='0'></a>", [
+				new KnowledgeNode(115, DisplayMode.POP, "Political correctness is intended to reduce the unnecessary involvement of negative emotions, which block progress.") //Needs examples
+			]),
+			new KnowledgeNode(116, DisplayMode.ITEM, "If your manager doesn't value the team's input, make them think it was their idea by asking them questions leading to it."), //Needs examples
+			new KnowledgeNode(117, DisplayMode.ITEM, "Customers, stakeholders, and managers assign different weights to their values (such as cost and efficiency); you may have to search for benefits to your idea from different perspectives in order for it to be accepted."), //Needs examples
 		]), 
 		new KnowledgeNode(1, DisplayMode.ACCORDION, "<h2>Leadership</h2><section class='children'></section>", [
-			new KnowledgeNode(101, DisplayMode.ITEM, "Be nice to your underlings, but not <i>too</i> nice.")
+			new KnowledgeNode(101, DisplayMode.ITEM, "Be nice to your underlings, but not <i>too</i> nice."),
+			new KnowledgeNode(118, DisplayMode.ITEM, "Knowing how to lead the team helps you be a part of the team."),
+			new KnowledgeNode(119, DisplayMode.ITEM, "Praise others' creativity or work ethic or at least show appreciation for their efforts when you're tempted to criticize their work."),
+			new KnowledgeNode(120, DisplayMode.ITEM, "You can memorize your own set of management phrases and praises. <a data-index='0'></a> <a data-index='1'></a>", [
+				new KnowledgeNode(121, DisplayMode.POP, "Example: &quot;That's an excellent idea. Like all ideas, however, it does have cons--can you tell us about the negatives and why you believe this idea will work well despite them?&quot;"), //TODO: Use a new type of node for these
+				new KnowledgeNode(122, DisplayMode.POP, "Example: &quot;If you would, please teach me and help me understand this,&quot; instead of &quot;That doesn't make sense.&quot;"),
+			]),
+			
 		]), 
 		new KnowledgeNode(2, DisplayMode.ACCORDION, "<h2>Design</h2><section class='children'></section>", [
 			new KnowledgeNode(102, DisplayMode.ITEM, "Read a book <a data-index='0'></a> for best results.", [
@@ -278,15 +294,23 @@ function popOpen(event, knowledgeNode) {
 	for (var x = 0; x < topNodes.length; x++) masterNode.appendChild(topNodes[x].toNode());
 })();
 
-//Rule: references you have to pay for should always be listed last.
+//Updating this project:
+//Update this comment when you add a KnowledgeNode: highest used ID = 117
+//Nodes should identify facts, ideas, principles, "best practices," shortcomings, and reasonable alteratives.
+//Keep reasoning (if more than a few words), more esoteric knowledge (language-, domain-, or algorithm-specific), and examples in out-of-the-way places (like Pop items) while remembering that they may be independently displayed.
+//Due to the vast array of languages, domains, and algorithms in existence, forks of this project (with none of the original KnowledgeNodes) may be necessary for anything that doesn't generalize well.
+//Top-level categories don't have to make statements or suggestions, but others should do so to the extent feasible.
+//References you have to pay for should always be listed last. Otherwise, it would be preferable to list the shortest ones first.
+//Try to reduce repeat items by combining similar ones with a phrasing that allows them to apply to both, and then use the same item in both places.
 
 /*
-Software development is as much dealing with human psychology, such as preventing mistakes, as it is writing software. A good developer answers politely, deflects subtly, plays the politics game with the customer's best interests in mind, and convinces imperfect managers of a good idea by making them think it was their idea, among many, many other things. Being a great developer requires considering the human aspects of yourself, your teammates, your manager, and the users.
-Knowing how to lead the team helps you be a part of the team. You can even memorize your own set of management phrases and praises such as, "That's an excellent idea. Like all ideas, however, it does have cons--can you tell us about the negatives and why you believe this idea will work well despite them?" and "If you would, please teach me and help me understand this." Praise others' creativity or work ethic or at least show appreciation for their efforts when you're tempted to criticize their work.
+TODO: Categories may include things like: job hunting, communication/people skills/meetings, management, brainstorming/planning, requirements, user interface/experience design, architecture, implementation, optimization, documentation, legal (for which I have very few tips, so hopefully a proper legal authority can contribute). I have a better list than this somewhere...
+TODO: Sort categories roughly in chronological order.
 
-Political correctness is intended to reduce the unnecessary involvement of negative emotions.
+Being a great developer requires considering the human aspects of yourself, your teammates, your manager, and the users.
+ 
+Deflect subtly and play the politics game, keeping the customer's best interests in mind.
 
-Development processes are designed to reduce human mistakes. Automation is designed to prevent human mistakes. Type safety and other guarantees (like those central to the design philosophy of languages like Rust and Go) identify mistakes sooner.
 People hire based on technologies despite that what programmers do best is learn new tech. As such, knowing old languages like COBOL can land you a high-paid position.
 All decisions come with trade-offs. New, immature technologies tend to be inefficient, and most technologies don't advertise their glaring flaws. Things that improve maintainability in one way can also hurt it worse in another way. [See quality attribute matrix for general examples]
 Maintaining a healthy body and mind is paramount to being a good developer, and that requires sleep, exercise, nutrition, and ergonomics. Being a considerate person is extremely important, too (see assertion #1 above).
@@ -308,17 +332,18 @@ If someone questions a piece of code, add a comment addressing their concern (or
 **Job hunting
 **Anti-patterns
 **Accessibility (colorblind, weak vision, blind, deaf)
-**Globalization (language, encodings, decimals and commas)
+**Globalization (language, encodings, decimals and commas, extra space for longer languages, right-to-left, fonts)
 **Bonus: famous catch phrases. ITHare: Your Mileage May Vary. Lucian Radu Teodorescu (Do Repeat Yourself on ACCU): Don't Overdo It.
-Automate everything that reasonably can be automated, such as pulling the code and all the tools and dependencies (which helps new team members get up to speed), building, test execution (which can be run during check-in), code formatting (which can be run constantly or during the build process), static analysis, and publishing (including packaging resources). If it takes more than two tasks, it's probably too much work. This acts as documentation, reducing unspoken knowledge.
+Automate everything that reasonably can be automated, such as pulling the code and all the tools and dependencies (which helps new team members get up to speed), building, test execution (which can be run during check-in), code formatting (which can be run constantly or during the build process), static analysis, and publishing (including packaging resources). If it takes more than two tasks, it's probably too much work. This acts as documentation, reducing unspoken knowledge. Infrequent things are just as important to automate as frequent things because humans forget them more easily.
 Think about everything.
 */
 
-//TODO: Allow accordion subsets; link all references that point to the same page (like a:visited but permanent); save the date/time of when you check a box (nullify if you uncheck) and not just the state of the box
+//TODO: Go through the above items, check that they fit the project concept, and format them as code.
+//TODO: Specify a standard for explanatory reasoning that doesn't qualify as a standalone knowledge item. (Basically, a Pop without a checkbox and with a "Why?" or "Examples" button instead of a "?" or whatever we settle on for references/external links to in-depth reasoning and examples.)
 //TODO: Use permanent storage to store the state of all your checkboxes
 //TODO: Allow downloading + restoring the state of all your checkboxes (these features together, from the user's perspective, roughly equate to using a database while maintaining purely-local functionality for guaranteed privacy and offline use)
-//TODO: Host this document on GitHub and use http://htmlpreview.github.com/ or http://htmlpreview.github.com/?full-URL-here to display the file from my website.
-//Wishlist: Voting, sorting, and filtering. If I show them in random order until there are over 100 user votes on the importance of each of the items, then I can be temporarily confident that it's not a popularity contest (say, because I had a fixed order, most people would only read the first few items) or chance ordering.
+//TODO: Offer a link to continue where you left off (go to the most recently checked item)
+//Wishlist: Voting, sorting, filtering, and searching (due to the collapsible categories). If I show them in random order until there are over 100 user votes on the importance of each of the items, then I can be temporarily confident that it's not a popularity contest (say, because I had a fixed order, most people would only read the first few items) or chance ordering.
 </script>
 </body>
 </html>
