@@ -33,7 +33,11 @@ h2 {
 	background-color: #59f;
 	color: #fff;
 	text-decoration: none;
-	padding: 0 6px;
+	padding: 0 5px;
+}
+
+.pop-button.checked-pop-button {
+    background-color: #bbb;
 }
 
 .pop-panel {
@@ -97,9 +101,13 @@ class KnowledgeNode {
 		this.displayMode = displayMode;
 		this.content = content;
 		this.children = children || [];
-		this.checked = false;
+		this.checked = KnowledgeNode.allNodes[this.id] || null; //Normally undefined, but we can fill that array with dates from localStorage when first loading the page, before creating any KnowledgeNodes.
+        this.domCheckboxes = [];
 		
-		//TODO: Assert that this node's ID differs from all previously created nodes (optionally: unless their contents and children match).
+        //Track all created nodes in a flat list. Ensure that no two nodes have the same ID.
+        //Check either that it doesn't exist or that whatever exists there doesn't have a truthy "id" property (assuming Date won't ever have 'id')
+        console.assert(!KnowledgeNode.allNodes[this.id] || !KnowledgeNode.allNodes[this.id].id, "Duplicate KnowledgeNode ID " + this.id);
+        KnowledgeNode.allNodes[this.id] = this;
 	}
 	
 	/**
@@ -132,8 +140,7 @@ class KnowledgeNode {
 			console.assert(referencedChildren.every(p => p <= 1), "Repeat data-index " + referencedChildren.findIndex(p => p > 1) + " in KnowledgeNode ID " + this.id);
 			
 			//Checkbox
-			//item.insertBefore(this.makeCheckbox(), item.firstChild);
-			item.appendChild(this.makeCheckbox());
+			item.insertBefore(this.makeCheckbox(), item.firstChild);
 			return item;
 			break;
 			
@@ -167,8 +174,7 @@ class KnowledgeNode {
 			//accordion.children[0].onclick = (event) => toggleAccordion(event);
 			
 			//Checkbox
-			//accordion.insertBefore(this.makeCheckbox(), accordion.firstChild);
-			accordion.appendChild(this.makeCheckbox());
+			accordion.insertBefore(this.makeCheckbox(), accordion.firstChild);
 			//TODO: Make the text into a label and move the checkbox into the label
 			
 			//Accordion expansion
@@ -186,7 +192,8 @@ class KnowledgeNode {
 			var pop = document.createElement("a");
 			pop.innerText = "?";
 			pop.classList.add("pop-button");
-			pop.onclick = pop.onmouseenter = (event) => popOpen(event, this);
+            if (this.checked) pop.classList.add("checked-pop-button");
+			pop.onclick = pop.onmouseenter = (event) => this.popOpen(event);
 			
 			return pop;
 			break;
@@ -200,8 +207,15 @@ class KnowledgeNode {
 	 */
 	onToggleByUser(checked) {
 		this.checked = checked ? new Date() : null; //Save the time it was checked or nullify if it was unchecked.
-		//TODO: Make all the checkboxes for this KnowledgeNode match the event.target DOM element. (May not be necessary if we limit repeats to only Pop nodes, as their checkboxes are generated upon mouse-enter / click.)
-		//TODO: I do want to allow repeat non-Pop nodes, though, because mutually exclusive categories don't work as well as tags in reality.
+        
+        try {
+            saveToLocalStorage();
+        } catch {
+            //TODO: unintrusively warn user that they're going to have to save their data manually
+        }
+
+		//TODO: Make all the checkboxes for this KnowledgeNode match the event.target DOM element. There will be repeat non-Pop nodes because mutually exclusive categories don't work as well as tags in reality.
+        //TODO: Add/remove "checked-pop-button" class on POP items when they get checked/unchecked
 	}
 	
 	/**
@@ -212,42 +226,59 @@ class KnowledgeNode {
 		chk.type = "checkbox";
 		chk.checked = this.checked;
 		chk.onclick = () => { this.onToggleByUser(chk.checked) };
+        
+        //Keep track of this checkbox internally for synchronization
+        this.domCheckboxes.push(chk);
+        
 		return chk;
 	}
+    
+    /**
+     * Create DOM elements to represent the content (and checkbox) for this Pop-type KnowledgeNode.
+     */
+    popOpen(event) {
+        //Make a pop-panel and pop-backdrop on the body.
+        var backdrop = document.createElement("div");
+        backdrop.classList.add("pop-backdrop");
+
+        var panel = document.createElement("div");
+        panel.classList.add("pop-panel");
+        panel.innerHTML = this.content;
+
+        var checkbox = this.makeCheckbox();
+        panel.insertBefore(checkbox, panel.firstChild);
+
+        document.body.appendChild(backdrop);
+        document.body.appendChild(panel);
+
+        panel.onmouseleave = backdrop.onclick = () => {
+            //Remove the checkbox from our tracking list
+            this.domCheckboxes.splice(this.domCheckboxes.indexOf(checkbox), 1);
+            panel.remove();
+            backdrop.remove();
+        };
+
+        //Make sure the width is no greater than 8x the initial height (for decent proportioning--the final aspect ratio will be much less than 8:1) and no greater than the width of the viewport.
+        panel.style.width = Math.min(panel.offsetHeight * 8, Math.min(document.body.clientWidth, panel.offsetWidth)) + "px";
+        panel.style.left = Math.max(0, Math.min(event.target.offsetLeft - 10 /*pop-panel left padding*/, document.body.clientWidth - panel.offsetWidth)) + "px";
+        panel.style.top = Math.max(0, Math.min(event.target.offsetTop - 10 /*pop-panel top padding*/, document.body.clientHeight - panel.offsetHeight)) + "px";
+    }
 }
+KnowledgeNode.allNodes = [];
 
 function toggleAccordion(event) {
 	event.target.parentNode.classList.toggle("collapsed");
 }
 
-function popOpen(event, knowledgeNode) {
-	//Make a pop-panel and pop-backdrop on the body.
-	var backdrop = document.createElement("div");
-	backdrop.classList.add("pop-backdrop");
-	
-	var panel = document.createElement("div");
-	panel.classList.add("pop-panel");
-	panel.innerHTML = knowledgeNode.content;
-	
-	panel.insertBefore(knowledgeNode.makeCheckbox(), panel.firstChild);
-	
-	document.body.appendChild(backdrop);
-	document.body.appendChild(panel);
-	
-	panel.onmouseleave = backdrop.onclick = () => { panel.remove(); backdrop.remove(); };	
-	
-	//Make sure the width is no greater than 8x the initial height (for decent proportioning--the final aspect ratio will be much less than 8:1) and no greater than the width of the viewport.
-	panel.style.width = Math.min(panel.offsetHeight * 8, Math.min(document.body.clientWidth, panel.offsetWidth)) + "px";
-	panel.style.left = Math.max(0, Math.min(event.target.offsetLeft - 10 /*pop-panel left padding*/, document.body.clientWidth - panel.offsetWidth)) + "px";
-	panel.style.top = Math.max(0, Math.min(event.target.offsetTop - 10 /*pop-panel top padding*/, document.body.clientHeight - panel.offsetHeight)) + "px";
-}
-
+var topNodes = []; //Accessible for easier development.
 //Startup code
 (function init() {
 	//Declarations for reused KnowledgeNodes
 	var creatingAwarenessPop;
-	
-	var topNodes = [
+    //Load items' checked-on dates from localStorage before creating any KnowledgeNodes.
+	loadFromLocalStorage();
+    
+	topNodes = [
 		new KnowledgeNode(0, DisplayMode.ACCORDION, "<h2>Teamwork</h2><section class='children'></section>", [
 			new KnowledgeNode(113, DisplayMode.ACCORDION, "Software development is as much dealing with human psychology, such as preventing mistakes, as it is writing software.", [
 				new KnowledgeNode(123, DisplayMode.ITEM, "Development processes are designed to reduce human mistakes."),
@@ -292,10 +323,61 @@ function popOpen(event, knowledgeNode) {
 	//Add the major section nodes to the body
 	var masterNode = document.getElementById("masternode");
 	for (var x = 0; x < topNodes.length; x++) masterNode.appendChild(topNodes[x].toNode());
+    
+    //Inform developers what the current top KnowledgeNode ID is.
+    console.log(determineTopId());
 })();
 
+//Call this from your browser's dev tools to keep track of the highest ID: determineTopId()
+//(IDs should not be changed or reused, as it would break the users' save data. This is to help you find the newest ID in case you forgot.)
+function determineTopId() {
+    return KnowledgeNode.allNodes.length + 1; //Assumes that allNodes remains an array and has its elements directly set
+}
+
+/**
+ * Get a list of objects with 'id' and 'date' corresponding to the KnowledgeNodes that are checked
+ */
+function getCheckedItems() {
+    var checkedItems = [];
+    for (var x = 0; x < KnowledgeNode.allNodes.length; x++) {
+        if (KnowledgeNode.allNodes[x] && KnowledgeNode.allNodes[x].checked) 
+            checkedItems.push({ id: x, date: KnowledgeNode.allNodes[x].checked });
+    }
+    return checkedItems;
+}
+
+/**
+ * Save the IDs and checked-on dates of checked nodes to localStorage.
+ * @throws {DOMException} (see documentation for localStorage.setItem)
+ */
+function saveToLocalStorage() {
+    var idsAndDates = getCheckedItems();
+    localStorage.setItem("CheckedItems", JSON.stringify(idsAndDates));
+}
+
+/**
+ * Load the IDs and checked-on dates of checked nodes from localStorage.
+ * Only call this before you create any KnowledgeNodes.
+ */
+function loadFromLocalStorage() {
+    var idsAndDates = JSON.parse(localStorage.getItem("CheckedItems") || "[]");
+    //Put the dates into the allNodes list.
+    for (var x = 0; x < idsAndDates.length; x++) {
+        KnowledgeNode.allNodes[idsAndDates[x].id] = new Date(idsAndDates[x].date);
+    }
+}
+
+window.onbeforeunload = function(event) { //TODO: This doesn't occur if you hit refresh (in Chrome). Look for other events that may help.
+    try {
+        saveToLocalStorage();
+    } catch {
+        //TODO: Inform user that saving failed and maybe they want to save manually.
+        //TODO: Only do so if they actually checked boxes, though.
+    }
+};
+
 //Updating this project:
-//Update this comment when you add a KnowledgeNode: highest used ID = 125
+//Update this comment when you add a KnowledgeNode (see determineTopId() if you forget): highest used ID = 125
 //Nodes should identify facts, ideas, principles, "best practices," shortcomings, and reasonable alteratives.
 //Keep reasoning (if more than a few words), more esoteric knowledge (language-, domain-, or algorithm-specific), and examples in out-of-the-way places (like Pop items) while remembering that they may be independently displayed.
 //Due to the vast array of languages, domains, and algorithms in existence, forks of this project (with none of the original KnowledgeNodes) may be necessary for anything that doesn't generalize well.
@@ -318,6 +400,10 @@ Publishing (publishing tools, configuration)
 
 TODO: Sort categories roughly in chronological order.
 
+-----------------------------------
+Knowledge items that need formatted
+-----------------------------------
+
 Being a great developer requires considering the human aspects of yourself, your teammates, your manager, and the users.
  
 Deflect subtly and play the politics game, keeping the customer's best interests in mind.
@@ -338,6 +424,7 @@ Brainstorming consists of coming up with ideas and leaving their evaluation for 
 When you find a need to optimize your code (which requires first benchmarking to identify the slowest parts), first try reducing the run time complexity of the algorithms, such as changing a search into a hash-based lookup. If that proves insufficient, you may have to sacrifice clean, maintainable code for optimization. Compilers, particularly those for more mature programming languages, are very smart and capable of optimizing in a lot of ways, so you probably won't get anything out of simple changes [http://ithare.com/the-importance-of-back-of-envelope-estimates/]. However, compilers do not have problem domain knowledge and are restricted from performing some optimizations due to their general-purpose nature. In some cases, changing a class to a struct may result in a speed increase because it can increase cache locality and reduce redirection. Compilers for less mature languages may be unable to perform common optimizations like loop interchange and tail recursion. [https://en.wikipedia.org/wiki/Optimizing_compiler] [http://ithare.com/optimizing-big-number-arithmetic-without-sse/]
 Fix bugs before implementing new features. Perform a proper root-cause analysis. Bugs can have hard-to-realize underlying causes that could affect new features. Their effects on other existing features could also go unnoticed.
 If someone questions a piece of code, add a comment addressing their concern (or rephrase an existing comment if it helps), because chances are good someone else will question it for the same reason eventually.
+Remember your potential numeric ranges and font sizes when designing visuals like pie charts (e.g. how can you fit a label on a 1% sliver?) and raw text displays (word wrap? Word break? Scrolling?).
 **Metrics
 **Requirements elicitation (ambiguity is the greatest evil), requirements documents, requirements tracking
 **Job hunting
@@ -352,8 +439,7 @@ Think about everything.
 
 //TODO: Go through the above items, check that they fit the project concept, and format them as code.
 //TODO: Specify a standard for explanatory reasoning that doesn't qualify as a standalone knowledge item. (Basically, a Pop without a checkbox and with a "Why?" or "Examples" button instead of a "?" or whatever we settle on for references/external links to in-depth reasoning and examples.)
-//TODO: Use permanent storage to store the state of all your checkboxes
-//TODO: Allow downloading + restoring the state of all your checkboxes (these features together, from the user's perspective, roughly equate to using a database while maintaining purely-local functionality for guaranteed privacy and offline use)
+//TODO: Allow downloading + restoring the state of all your checkboxes (this feature plus the automatic localStorage one together, from the user's perspective, roughly equate to using a database while maintaining purely-local functionality for guaranteed privacy and offline use)
 //TODO: Offer a link to continue where you left off (go to the most recently checked item)
 //Wishlist: Voting, sorting, filtering, and searching (due to the collapsible categories). If I show them in random order until there are over 100 user votes on the importance of each of the items, then I can be temporarily confident that it's not a popularity contest (say, because I had a fixed order, most people would only read the first few items) or chance ordering.
 </script>
