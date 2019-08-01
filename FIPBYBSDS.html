@@ -37,7 +37,7 @@ h2 {
 }
 
 .pop-button.checked-pop-button {
-    background-color: #bbb;
+	background-color: #bbb;
 }
 
 .pop-panel {
@@ -58,13 +58,40 @@ h2 {
 	height: 100vh;
 	z-index: 1;
 }
+
+/*Experimental readability styling*/
+.columnize {
+	margin: 0 10%;
+}
+.columnize > * {
+	display: inline;
+}
+@media (min-width: 50em) {
+	.columnize {
+		column-count: 2;
+		margin: 0 5%;
+	}
+}
+@media (min-width: 100em) {
+	.columnize {
+		column-count: 3;
+		margin: 0;
+	}
+}
+@media (min-width: 150em) {
+	.columnize {
+		column-count: 4;
+	}
+}
 </style>
 </head>
 <body>
 
 <h1>Facts, Ideas, and Principles for Becoming Your Best (Software Developer) Self</h1>
+<div class="columnize">
 <p>There is a vast amount of knowledge in the world, but much of it is sparsely distributed through wordy blog entries, articles, and books. The authors of these writings, as good authors tend to do, offer many examples and in-depth discussion of the concepts. However, most compositions cover a limited selection of concepts within the composition's already limited scope. This is not conducive to already knowledgeable individuals refreshing their knowledge or looking for realizations that have thus far escaped their judgment, nor does it function as guidance for novices seeking direction. As such, I offer this dense collection of a broad variety of facts, ideas, and principles in the hope that it can be a powerful, concise reference for experienced software developers (and related individuals) in their journey to become masters of all things surrounding their profession.</p>
 <p>This page provides checkboxes to record your progress as you read individual items. The date and time of the moment you check each checkbox is saved in local storage. Because one can read through the items at any level or read the high-level items in one pass and the lower-level ones in another pass, consider each checkbox to apply only to the text directly adjacent to it.</p>
+</div>
 <section id="masternode"></section>
 
 <script>
@@ -95,19 +122,21 @@ class KnowledgeNode {
 	 * @param {DisplayMode} displayMode How this item should be displayed (options are "item", "accordion", "pop")
 	 * @param {string} content HTML content to display
 	 * @param {Array} children Array of KnowledgeNodes that this one contains (which would be checked if you check this node, and this node would be checked if you check all the children)
+	 * @param {bool} hasCheckbox This item should have a checkbox (intended to be set to false for top-level categories which do not stand on their own as knowledge items)
 	 */
-	constructor(id, displayMode, content, children) {
+	constructor(id, displayMode, content, children, hasCheckbox = true) {
 		this.id = id;
 		this.displayMode = displayMode;
 		this.content = content;
 		this.children = children || [];
 		this.checked = KnowledgeNode.allNodes[this.id] || null; //Normally undefined, but we can fill that array with dates from localStorage when first loading the page, before creating any KnowledgeNodes.
-        this.domCheckboxes = [];
+		this.domCheckboxes = [];
+		this.hasCheckbox = hasCheckbox;
 		
-        //Track all created nodes in a flat list. Ensure that no two nodes have the same ID.
-        //Check either that it doesn't exist or that whatever exists there doesn't have a truthy "id" property (assuming Date won't ever have 'id')
-        console.assert(!KnowledgeNode.allNodes[this.id] || !KnowledgeNode.allNodes[this.id].id, "Duplicate KnowledgeNode ID " + this.id);
-        KnowledgeNode.allNodes[this.id] = this;
+		//Track all created nodes in a flat list. Ensure that no two nodes have the same ID.
+		//Check either that it doesn't exist or that whatever exists there doesn't have a truthy "id" property (assuming Date won't ever have 'id')
+		console.assert(!KnowledgeNode.allNodes[this.id] || !KnowledgeNode.allNodes[this.id].id, "Duplicate KnowledgeNode ID " + this.id);
+		KnowledgeNode.allNodes[this.id] = this;
 	}
 	
 	/**
@@ -117,86 +146,104 @@ class KnowledgeNode {
 	toNode(depth = 0) {
 		console.assert(depth <= MAX_DEPTH, "Exceeded max depth when constructing node for KnowledgeNode ID " + this.id);
 		//Generate a DOM node depending on displayMode
-		//TODO: You might store all DOM nodes generated for this KnowledgeNode in an array so that they can all update simultaneously when one does. Like a watch/reactor, but without a nasty and slow framework!
 		switch (this.displayMode) {
 			case DisplayMode.ITEM:
-			var item = document.createElement("p");
-			item.innerHTML = this.content;
-			
-			var referencedChildren = this.children.map(p => 0); //Parallel to this.children; each element indicates the reference count for the child with the same index
-			var pops = item.getElementsByTagName("a");
-			for (var x = 0; x < pops.length; x++) {
-				if (pops[x].dataset.index !== undefined) { //Check for data-index. If it has it, replace that element with the child whose index matches data-index.
-					var idx = parseInt(pops[x].dataset.index);
-					referencedChildren[idx]++; //Increment reference count for assertion
-					console.assert(idx >= 0, "Negative or non-numeric data-index found ('" + pops[x].dataset.index + "') in KnowledgeNode ID " + this.id);
-					console.assert(idx < this.children.length, "Found out-of-bounds data-index (" + idx + "; should be less than " + this.children.length + ") in KnowledgeNode ID " + this.id);
-					
-					pops[x].replaceWith(this.children[idx].toNode(depth + 1));
-				} else console.assert(pops[x].href || pops[x].onclick, "Found an 'a' tag with neither a href nor an onclick event handler in KnowledgeNode ID " + this.id); //Probably a mistake
-			}
-			
-			console.assert(referencedChildren.every(p => p > 0), "Unreferenced child " + referencedChildren.findIndex(p => p == 0) + " in KnowledgeNode ID " + this.id);
-			console.assert(referencedChildren.every(p => p <= 1), "Repeat data-index " + referencedChildren.findIndex(p => p > 1) + " in KnowledgeNode ID " + this.id);
-			
-			//Checkbox
-			item.insertBefore(this.makeCheckbox(), item.firstChild);
-			return item;
-			break;
+				var item = document.createElement("p");
+				item.innerHTML = this.content;
+				
+				var referencedChildren = this.children.map(p => 0); //Parallel to this.children; each element indicates the reference count for the child with the same index
+				var pops = item.getElementsByTagName("a");
+				for (var x = 0; x < pops.length; x++) {
+					if (pops[x].dataset.index !== undefined) { //Check for data-index. If it has it, replace that element with the child whose index matches data-index.
+						var idx = parseInt(pops[x].dataset.index);
+						referencedChildren[idx]++; //Increment reference count for assertion
+						console.assert(idx >= 0, "Negative or non-numeric data-index found ('" + pops[x].dataset.index + "') in KnowledgeNode ID " + this.id);
+						console.assert(idx < this.children.length, "Found out-of-bounds data-index (" + idx + "; should be less than " + this.children.length + ") in KnowledgeNode ID " + this.id);
+						
+						pops[x].replaceWith(this.children[idx].toNode(depth + 1));
+					} else console.assert(pops[x].href || pops[x].onclick, "Found an 'a' tag with neither a href nor an onclick event handler in KnowledgeNode ID " + this.id); //Probably a mistake
+				}
+				
+				console.assert(referencedChildren.every(p => p > 0), "Unreferenced child " + referencedChildren.findIndex(p => p == 0) + " in KnowledgeNode ID " + this.id);
+				console.assert(referencedChildren.every(p => p <= 1), "Repeat data-index " + referencedChildren.findIndex(p => p > 1) + " in KnowledgeNode ID " + this.id);
+				
+				//Checkbox
+				item.insertBefore(this.makeCheckbox(), item.firstChild);
+				
+				//Wrap it all up in a label
+				label = document.createElement("label");
+				label.appendChild(item);
+				item = label;
+
+				return item;
+				break;
 			
 			case DisplayMode.ACCORDION:
-			var accordion = document.createElement("div");
-			accordion.classList.add("accordion");
-			accordion.classList.add("collapsed"); //TODO: Might want to expand to show all not-already-checked nodes
-			accordion.innerHTML = this.content;
-			
-			var childContainer = accordion.getElementsByClassName("children")[0];
-			if (!childContainer) { //If there isn't a container specified by the user, just append one.
-				childContainer = document.createElement("div");
-				childContainer.classList.add("children");
-				accordion.appendChild(childContainer);
-			}
-			
-			console.assert(this.children.length > 0, "Accordion nodes should have children, but this one does not; KnowledgeNode ID " + this.id);
-			for (var x = 0; x < this.children.length; x++) {
-				console.assert(this.children[x].displayMode != DisplayMode.POP, "Accordion nodes should not have Pop children; KnowledgeNode ID " + this.id);
-				childContainer.appendChild(this.children[x].toNode(depth + 1));
-			}
-			//TODO: For better startup performance if we have a ton of nodes in accordions, we might just generate the child DOM when the accordion expands and maybe delete the child DOM when the accordion collapses.
-			
-			//Accordion toggle behavior
-			//Make sure the first node is an element
-			//if (accordion.firstChild != accordion.children[0]) {
-			//	var span = document.createElement("span");
-			//	span.appendChild(accordion.firstChild); //Move the text into the span
-			//	accordion.insertBefore(span, accordion.firstChild); //Move the span into the accordion
-			//}
-			//accordion.children[0].onclick = (event) => toggleAccordion(event);
-			
-			//Checkbox
-			accordion.insertBefore(this.makeCheckbox(), accordion.firstChild);
-			//TODO: Make the text into a label and move the checkbox into the label
-			
-			//Accordion expansion
-			var arrow = document.createElement("span");
-			arrow.classList.add("arrow");
-			arrow.onclick = (event) => toggleAccordion(event);
-			accordion.insertBefore(arrow, accordion.firstChild);
-			
-			return accordion;
-			break;
+				var accordion = document.createElement("div");
+				accordion.classList.add("accordion");
+				accordion.classList.add("collapsed"); //TODO: Might want to expand to show all not-already-checked nodes. Maybe not. Maybe there should be an "expand children" button. Dunno.
+				accordion.innerHTML = this.content;
+				
+				//Warning: if you have a class='children' element, you should have a label tag, too.
+				var label = accordion.getElementsByTagName("label")[0];
+				if (!label) {
+					//If there's no label inside the accordion, wrap the entire thing with a label (before we add the 'children' element).
+					label = document.createElement("label");
+					label.appendChild(accordion);
+					accordion = document.createElement("div");
+					accordion.appendChild(label);
+					//TODO: Check for a class='children' inside the label here, move it to after the label, and then remove the above warning.
+				}
+				
+				var childContainer = accordion.getElementsByClassName("children")[0];
+				if (!childContainer) { //If there isn't a container specified by the user, just append one.
+					childContainer = document.createElement("div");
+					childContainer.classList.add("children");
+					accordion.appendChild(childContainer);
+				}
+				
+				console.assert(this.children.length > 0, "Accordion nodes should have children, but this one does not; KnowledgeNode ID " + this.id);
+				for (var x = 0; x < this.children.length; x++) {
+					console.assert(this.children[x].displayMode != DisplayMode.POP, "Accordion nodes should not have Pop children; KnowledgeNode ID " + this.id);
+					childContainer.appendChild(this.children[x].toNode(depth + 1));
+				}
+				
+				//Accordion toggle behavior
+				//Make sure the first node is an element
+				//if (accordion.firstChild != accordion.children[0]) {
+				//	var span = document.createElement("span");
+				//	span.appendChild(accordion.firstChild); //Move the text into the span
+				//	accordion.insertBefore(span, accordion.firstChild); //Move the span into the accordion
+				//}
+				//accordion.children[0].onclick = (event) => toggleAccordion(event);
+				
+				//Checkbox
+				if (this.hasCheckbox) label.insertBefore(this.makeCheckbox(), label.firstChild);
+				//TODO: If we don't have a checkbox, would it be right for clicking the text to make the accordion expand/collapse? It might introduce perceived internal consistency since clicking other items links to the checkbox... but without that feature, it's externally inconsistent.
+				
+				//Accordion expansion
+				var arrow = document.createElement("span");
+				arrow.classList.add("arrow");
+				arrow.onclick = (event) => toggleAccordion(event);
+				accordion.insertBefore(arrow, accordion.firstChild);
+				
+				return accordion;
+				break;
 			
 			case DisplayMode.POP:
-			console.assert(this.children.length == 0, "Pop nodes should not have children; KnowledgeNode ID " + this.id);
-			
-			var pop = document.createElement("a");
-			pop.innerText = "?";
-			pop.classList.add("pop-button");
-            if (this.checked) pop.classList.add("checked-pop-button");
-			pop.onclick = pop.onmouseenter = (event) => this.popOpen(event);
-			
-			return pop;
-			break;
+				console.assert(this.children.length == 0, "Pop nodes should not have children; KnowledgeNode ID " + this.id);
+				
+				var pop = document.createElement("a");
+				pop.innerText = "?";
+				pop.classList.add("pop-button");
+				if (this.checked) pop.classList.add("checked-pop-button");
+				pop.onclick = pop.onmouseenter = (event) => {
+					this.popOpen(event);
+					event.stopPropagation(); //Otherwise, the click event passes on to the label, which checks or unchecks the parent item's checkbox.
+				}
+				
+				return pop;
+				break;
 			
 		}
 	}
@@ -207,62 +254,66 @@ class KnowledgeNode {
 	 */
 	onToggleByUser(checked) {
 		this.checked = checked ? new Date() : null; //Save the time it was checked or nullify if it was unchecked.
-        
-        try {
-            saveToLocalStorage();
-        } catch {
-            //TODO: unintrusively warn user that they're going to have to save their data manually
-        }
+		
+		try {
+			saveToLocalStorage();
+		} catch {
+			//TODO: unintrusively warn user that they're going to have to save their data manually
+		}
 
 		//TODO: Make all the checkboxes for this KnowledgeNode match the event.target DOM element. There will be repeat non-Pop nodes because mutually exclusive categories don't work as well as tags in reality.
-        //TODO: Add/remove "checked-pop-button" class on POP items when they get checked/unchecked
+		//TODO: Add/remove "checked-pop-button" class on POP items when they get checked/unchecked
 	}
 	
 	/**
 	 * Create a DOM input node as a checkbox for this KnowledgeNode. The checkbox's initial state depends on this.checked.
 	 */
 	makeCheckbox() {
+		console.assert(this.hasCheckbox, "Should not be calling makeCheckbox if hasCheckbox is false; KnowledgeNode ID " + this.id);
+	
 		var chk = document.createElement("input");
 		chk.type = "checkbox";
 		chk.checked = this.checked;
 		chk.onclick = () => { this.onToggleByUser(chk.checked) };
-        
-        //Keep track of this checkbox internally for synchronization
-        this.domCheckboxes.push(chk);
-        
+		
+		//Keep track of this checkbox internally for synchronization
+		this.domCheckboxes.push(chk);
+		
 		return chk;
 	}
-    
-    /**
-     * Create DOM elements to represent the content (and checkbox) for this Pop-type KnowledgeNode.
-     */
-    popOpen(event) {
-        //Make a pop-panel and pop-backdrop on the body.
-        var backdrop = document.createElement("div");
-        backdrop.classList.add("pop-backdrop");
+	
+	/**
+	 * Create DOM elements to represent the content (and checkbox) for this Pop-type KnowledgeNode.
+	 */
+	popOpen(event) {
+		//Make a pop-panel and pop-backdrop on the body.
+		var backdrop = document.createElement("div");
+		backdrop.classList.add("pop-backdrop");
 
-        var panel = document.createElement("div");
-        panel.classList.add("pop-panel");
-        panel.innerHTML = this.content;
+		var panel = document.createElement("div");
+		panel.classList.add("pop-panel");
+		panel.innerHTML = this.content;
 
-        var checkbox = this.makeCheckbox();
-        panel.insertBefore(checkbox, panel.firstChild);
+		if (this.hasCheckbox) {
+			var checkbox = this.makeCheckbox();
+			panel.insertBefore(checkbox, panel.firstChild);
+		}
 
-        document.body.appendChild(backdrop);
-        document.body.appendChild(panel);
+		document.body.appendChild(backdrop);
+		document.body.appendChild(panel);
 
-        panel.onmouseleave = backdrop.onclick = () => {
-            //Remove the checkbox from our tracking list
-            this.domCheckboxes.splice(this.domCheckboxes.indexOf(checkbox), 1);
-            panel.remove();
-            backdrop.remove();
-        };
+		panel.onmouseleave = backdrop.onclick = () => {
+			//Remove the checkbox from our tracking list
+			if (this.hasCheckbox) this.domCheckboxes.splice(this.domCheckboxes.indexOf(checkbox), 1);
+			panel.remove();
+			backdrop.remove();
+		};
 
-        //Make sure the width is no greater than 8x the initial height (for decent proportioning--the final aspect ratio will be much less than 8:1) and no greater than the width of the viewport.
-        panel.style.width = Math.min(panel.offsetHeight * 8, Math.min(document.body.clientWidth, panel.offsetWidth)) + "px";
-        panel.style.left = Math.max(0, Math.min(event.target.offsetLeft - 10 /*pop-panel left padding*/, document.body.clientWidth - panel.offsetWidth)) + "px";
-        panel.style.top = Math.max(0, Math.min(event.target.offsetTop - 10 /*pop-panel top padding*/, document.body.clientHeight - panel.offsetHeight)) + "px";
-    }
+		//Make sure the width is no greater than 8x the initial height (for decent proportioning--the final aspect ratio will be much less than 8:1) and no greater than the width of the viewport.
+		panel.style.width = Math.min(panel.offsetHeight * 8, Math.min(document.body.clientWidth, panel.offsetWidth)) + "px";
+		panel.style.left = Math.max(0, Math.min(event.target.offsetLeft - document.body.scrollLeft - 10 /*pop-panel left padding*/, document.body.clientWidth - panel.offsetWidth)) + "px";
+		panel.style.top = Math.max(0, Math.min(event.target.offsetTop - document.body.scrollTop - 10 /*pop-panel top padding*/, document.body.clientHeight - panel.offsetHeight)) + "px";
+	}
 }
 KnowledgeNode.allNodes = [];
 
@@ -272,14 +323,14 @@ function toggleAccordion(event) {
 
 var topNodes = []; //Accessible for easier development.
 //Startup code
-(function init() {
+document.body.onload = function() {
 	//Declarations for reused KnowledgeNodes
 	var creatingAwarenessPop;
-    //Load items' checked-on dates from localStorage before creating any KnowledgeNodes.
+	//Load items' checked-on dates from localStorage before creating any KnowledgeNodes.
 	loadFromLocalStorage();
-    
+	
 	topNodes = [
-		new KnowledgeNode(0, DisplayMode.ACCORDION, "<h2>Teamwork</h2><section class='children'></section>", [
+		new KnowledgeNode(0, DisplayMode.ACCORDION, "<label><h2>Teamwork</h2></label><section class='children'></section>", [
 			new KnowledgeNode(113, DisplayMode.ACCORDION, "Software development is as much dealing with human psychology, such as preventing mistakes, as it is writing software.", [
 				new KnowledgeNode(123, DisplayMode.ITEM, "Development processes are designed to reduce human mistakes."),
 				new KnowledgeNode(124, DisplayMode.ITEM, "Automation is designed to prevent human mistakes."),
@@ -302,8 +353,8 @@ var topNodes = []; //Accessible for easier development.
 			]),
 			new KnowledgeNode(116, DisplayMode.ITEM, "If your manager doesn't value the team's input, make them think it was their idea by asking them questions leading to it."), //Needs examples
 			new KnowledgeNode(117, DisplayMode.ITEM, "Customers, stakeholders, and managers assign different weights to their values (such as cost and efficiency); you may have to search for benefits to your idea from different perspectives in order for it to be accepted."), //Needs examples
-		]), 
-		new KnowledgeNode(1, DisplayMode.ACCORDION, "<h2>Leadership</h2><section class='children'></section>", [
+		], false), 
+		new KnowledgeNode(1, DisplayMode.ACCORDION, "<label><h2>Leadership</h2></label><section class='children'></section>", [
 			new KnowledgeNode(101, DisplayMode.ITEM, "Be nice to your underlings, but not <i>too</i> nice."),
 			new KnowledgeNode(118, DisplayMode.ITEM, "Knowing how to lead the team helps you be a part of the team."),
 			new KnowledgeNode(119, DisplayMode.ITEM, "Praise others' creativity or work ethic or at least show appreciation for their efforts when you're tempted to criticize their work."),
@@ -312,38 +363,40 @@ var topNodes = []; //Accessible for easier development.
 				new KnowledgeNode(122, DisplayMode.POP, "Example: &quot;If you would, please teach me and help me understand this,&quot; instead of &quot;That doesn't make sense.&quot;"),
 			]),
 			
-		]), 
-		new KnowledgeNode(2, DisplayMode.ACCORDION, "<h2>Design</h2><section class='children'></section>", [
+		], false), 
+		new KnowledgeNode(2, DisplayMode.ACCORDION, "<label><h2>Design</h2></label><section class='children'></section>", [
 			new KnowledgeNode(102, DisplayMode.ITEM, "Read a book <a data-index='0'></a> for best results.", [
 				new KnowledgeNode(103, DisplayMode.POP, "I recommend <a href='https://www.amazon.com/Design-Everyday-Things-Revised-Expanded-ebook/dp/B00E257T6C'>The Design of Everyday Things</a>. This is a wordy blurb because I like blurbs that are very wordy and extremely long and paragraph-like. It's entirely possible that tooltips of this nature could be very long like this one, and so I need to test to make sure that such long tooltips look acceptable.")
 			])
-		])
+		], false)
 	];
 	
 	//Add the major section nodes to the body
 	var masterNode = document.getElementById("masternode");
 	for (var x = 0; x < topNodes.length; x++) masterNode.appendChild(topNodes[x].toNode());
-    
-    //Inform developers what the current top KnowledgeNode ID is.
-    console.log(determineTopId());
-})();
+	
+	//Inform developers what the current top KnowledgeNode ID is.
+	var topFoundId = determineTopId();
+	console.log("Current highest KnowledgeNode ID: " + topFoundId);
+	console.assert(topFoundId <= highestUsedId, "Please update highestUsedId.");
+};
 
 //Call this from your browser's dev tools to keep track of the highest ID: determineTopId()
 //(IDs should not be changed or reused, as it would break the users' save data. This is to help you find the newest ID in case you forgot.)
 function determineTopId() {
-    return KnowledgeNode.allNodes.length + 1; //Assumes that allNodes remains an array and has its elements directly set
+	return KnowledgeNode.allNodes.length - 1; //Assumes that allNodes remains an array and has its elements directly set
 }
 
 /**
  * Get a list of objects with 'id' and 'date' corresponding to the KnowledgeNodes that are checked
  */
 function getCheckedItems() {
-    var checkedItems = [];
-    for (var x = 0; x < KnowledgeNode.allNodes.length; x++) {
-        if (KnowledgeNode.allNodes[x] && KnowledgeNode.allNodes[x].checked) 
-            checkedItems.push({ id: x, date: KnowledgeNode.allNodes[x].checked });
-    }
-    return checkedItems;
+	var checkedItems = [];
+	for (var x = 0; x < KnowledgeNode.allNodes.length; x++) {
+		if (KnowledgeNode.allNodes[x] && KnowledgeNode.allNodes[x].checked) 
+			checkedItems.push({ id: x, date: KnowledgeNode.allNodes[x].checked });
+	}
+	return checkedItems;
 }
 
 /**
@@ -351,8 +404,8 @@ function getCheckedItems() {
  * @throws {DOMException} (see documentation for localStorage.setItem)
  */
 function saveToLocalStorage() {
-    var idsAndDates = getCheckedItems();
-    localStorage.setItem("CheckedItems", JSON.stringify(idsAndDates));
+	var idsAndDates = getCheckedItems();
+	localStorage.setItem("CheckedItems", JSON.stringify(idsAndDates));
 }
 
 /**
@@ -360,24 +413,25 @@ function saveToLocalStorage() {
  * Only call this before you create any KnowledgeNodes.
  */
 function loadFromLocalStorage() {
-    var idsAndDates = JSON.parse(localStorage.getItem("CheckedItems") || "[]");
-    //Put the dates into the allNodes list.
-    for (var x = 0; x < idsAndDates.length; x++) {
-        KnowledgeNode.allNodes[idsAndDates[x].id] = new Date(idsAndDates[x].date);
-    }
+	var idsAndDates = JSON.parse(localStorage.getItem("CheckedItems") || "[]");
+	//Put the dates into the allNodes list.
+	for (var x = 0; x < idsAndDates.length; x++) {
+		KnowledgeNode.allNodes[idsAndDates[x].id] = new Date(idsAndDates[x].date);
+	}
 }
 
-window.onbeforeunload = function(event) { //TODO: This doesn't occur if you hit refresh (in Chrome). Look for other events that may help.
-    try {
-        saveToLocalStorage();
-    } catch {
-        //TODO: Inform user that saving failed and maybe they want to save manually.
-        //TODO: Only do so if they actually checked boxes, though.
-    }
+window.onbeforeunload = function(event) { //TODO: This doesn't occur if you hit refresh (in Chrome). Look for other events that may help; you want to just save every time the user touches a checkbox, but they may still need reminded to save their file locally.
+	try {
+		saveToLocalStorage();
+	} catch {
+		//TODO: Inform user that saving failed and maybe they want to save manually.
+		//TODO: Only do so if they actually checked boxes, though.
+	}
 };
 
 //Updating this project:
-//Update this comment when you add a KnowledgeNode (see determineTopId() if you forget): highest used ID = 125
+//Update this constant when you add a KnowledgeNode (for the sake of the next person who wants to add KnowledgeNodes or if someone removes the most recently added one that was published):
+const highestUsedId = 125;
 //Nodes should identify facts, ideas, principles, "best practices," shortcomings, and reasonable alteratives.
 //Keep reasoning (if more than a few words), more esoteric knowledge (language-, domain-, or algorithm-specific), and examples in out-of-the-way places (like Pop items) while remembering that they may be independently displayed.
 //Due to the vast array of languages, domains, and algorithms in existence, forks of this project (with none of the original KnowledgeNodes) may be necessary for anything that doesn't generalize well.
@@ -423,6 +477,7 @@ When writing code, especially if you don't have a formal design prepared in adva
 Brainstorming consists of coming up with ideas and leaving their evaluation for later. [https://www.managers.org.uk/~/media/Files/Campus%20CMI/Checklists%20PDP/Brainstorming.ashx]
 When you find a need to optimize your code (which requires first benchmarking to identify the slowest parts), first try reducing the run time complexity of the algorithms, such as changing a search into a hash-based lookup. If that proves insufficient, you may have to sacrifice clean, maintainable code for optimization. Compilers, particularly those for more mature programming languages, are very smart and capable of optimizing in a lot of ways, so you probably won't get anything out of simple changes [http://ithare.com/the-importance-of-back-of-envelope-estimates/]. However, compilers do not have problem domain knowledge and are restricted from performing some optimizations due to their general-purpose nature. In some cases, changing a class to a struct may result in a speed increase because it can increase cache locality and reduce redirection. Compilers for less mature languages may be unable to perform common optimizations like loop interchange and tail recursion. [https://en.wikipedia.org/wiki/Optimizing_compiler] [http://ithare.com/optimizing-big-number-arithmetic-without-sse/]
 Fix bugs before implementing new features. Perform a proper root-cause analysis. Bugs can have hard-to-realize underlying causes that could affect new features. Their effects on other existing features could also go unnoticed.
+No matter how minor you think a change is, test again after making it.
 If someone questions a piece of code, add a comment addressing their concern (or rephrase an existing comment if it helps), because chances are good someone else will question it for the same reason eventually.
 Remember your potential numeric ranges and font sizes when designing visuals like pie charts (e.g. how can you fit a label on a 1% sliver?) and raw text displays (word wrap? Word break? Scrolling?).
 **Metrics
@@ -441,7 +496,13 @@ Think about everything.
 //TODO: Specify a standard for explanatory reasoning that doesn't qualify as a standalone knowledge item. (Basically, a Pop without a checkbox and with a "Why?" or "Examples" button instead of a "?" or whatever we settle on for references/external links to in-depth reasoning and examples.)
 //TODO: Allow downloading + restoring the state of all your checkboxes (this feature plus the automatic localStorage one together, from the user's perspective, roughly equate to using a database while maintaining purely-local functionality for guaranteed privacy and offline use)
 //TODO: Offer a link to continue where you left off (go to the most recently checked item)
-//Wishlist: Voting, sorting, filtering, and searching (due to the collapsible categories). If I show them in random order until there are over 100 user votes on the importance of each of the items, then I can be temporarily confident that it's not a popularity contest (say, because I had a fixed order, most people would only read the first few items) or chance ordering.
+/*Wishlist:
+Voting
+Sorting
+Filtering
+Searching (due to the collapsible categories). If I show them in random order until there are over 100 user votes on the importance of each of the items, then I can be temporarily confident that it's not a popularity contest (say, because I had a fixed order, most people would only read the first few items) or chance ordering.
+For better startup performance if we have a ton of nodes in accordions, we might just generate the child DOM when the accordion expands and maybe delete the child DOM when the accordion collapses.
+*/
 </script>
 </body>
 </html>
