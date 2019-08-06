@@ -329,33 +329,31 @@ document.body.onload = function() {
 	//Load items' checked-on dates from localStorage before creating any KnowledgeNodes.
 	loadFromLocalStorage();
 	
+	//Use this because the top-level categories should have the same format, and their IDs do not matter.
+	var topLevelCategories = 0;
+	function makeTopLevelCategoryNode(name, children) {
+		return new KnowledgeNode(topLevelCategories++, DisplayMode.ACCORDION, "<label><h2>" + name + "</h2></label><section class='children'></section>", children, false);
+	}
+	
 	topNodes = [
-		new KnowledgeNode(0, DisplayMode.ACCORDION, "<label><h2>Teamwork</h2></label><section class='children'></section>", [
-			new KnowledgeNode(113, DisplayMode.ACCORDION, "Software development is as much dealing with human psychology, such as preventing mistakes, as it is writing software.", [
-				new KnowledgeNode(123, DisplayMode.ITEM, "Development processes are designed to reduce human mistakes."),
-				new KnowledgeNode(124, DisplayMode.ITEM, "Automation is designed to prevent human mistakes."),
-				new KnowledgeNode(125, DisplayMode.ITEM, "Type safety and other guarantees (like those central to the design philosophy of languages like Rust and Go) identify mistakes sooner.")
+		makeTopLevelCategoryNode("Attitude", [
+			new KnowledgeNode(126, DisplayMode.ITEM, "Practice pragmatism, not dogmatism. <a data-index='0'></a>", [
+				new KnowledgeNode(127, DisplayMode.POP, "Dogmatism means you see concepts as rules to be followed without context. A pragmatist considers the pros and cons of each approach in-context and seeks the best answer for each specific situation."),
+			])
+		]),
+		makeTopLevelCategoryNode("Job Hunting", [
+			new KnowledgeNode(129, DisplayMode.ITEM, "To-do"),
+		]),
+		makeTopLevelCategoryNode("Requirements", [
+			new KnowledgeNode(130, DisplayMode.ITEM, "To-do"),
+		]),
+		makeTopLevelCategoryNode("Planning", [
+			new KnowledgeNode(131, DisplayMode.ITEM, "To-do"),
+		]),
+		makeTopLevelCategoryNode("Leadership", [
+			new KnowledgeNode(101, DisplayMode.ITEM, "Consider the human feelings of those under your lead, but do not forget the project priorities. <a data-index='0'></a>", [
+				new KnowledgeNode(128, DisplayMode.POP, "Remember the rest of the team when making a decision on behalf of an individual. Some get jealous easily, and it may be seen as favoritism if one individual demands a lot of consideration."),
 			]),
-			new KnowledgeNode(100, DisplayMode.ACCORDION, "Be slow to cast blame.", [
-				new KnowledgeNode(104, DisplayMode.ITEM, "Don't blame the user before blaming the design <a data-index='0'></a>.", [
-					new KnowledgeNode(105, DisplayMode.POP, "<a href='https://www.amazon.com/Design-Everyday-Things-Revised-Expanded-ebook/dp/B00E257T6C'>The Design of Everyday Things</a>")]),
-				new KnowledgeNode(106, DisplayMode.ITEM, "Admit your mistakes for the sake of process improvement and learning <a data-index='0'></a>.", [
-					creatingAwarenessPop = new KnowledgeNode(107, DisplayMode.POP, "<a href='https://accu.org/index.php/journals/1436'>Creating Awareness</a>")]),
-				new KnowledgeNode(108, DisplayMode.ITEM, "Even if you cast blame only to inject humor, ensure that you also quickly follow up with sharing the blame or pointing out that mistakes can happen to anyone, because your jokes will be taken personally and can quickly lead to a hostile environment.")
-			]),
-			new KnowledgeNode(109, DisplayMode.ACCORDION, "Keep a document of lessons learned.", [
-				new KnowledgeNode(110, DisplayMode.ITEM, "Log everything you can, because without data, proper studies are impossible. <a data-index='0'></a>", [creatingAwarenessPop]),
-				new KnowledgeNode(111, DisplayMode.ITEM, "Checklists and 'lessons learned' documents help because schools/authors/humans only have so much time/energy/memory and so much they can spontaneously recall or teach you about."),
-				new KnowledgeNode(112, DisplayMode.ITEM, "A good document of lessons learned could rapidly teach a young developer lessons that they otherwise may never learn or may learn only after many years of experience, as well as reminding you of lessons you once learned and may have forgotten.")
-			]),
-			new KnowledgeNode(114, DisplayMode.ITEM, "A good developer is polite and considerate in the line of duty. <a data-index='0'></a>", [
-				new KnowledgeNode(115, DisplayMode.POP, "Political correctness is intended to reduce the unnecessary involvement of negative emotions, which block progress.") //Needs examples
-			]),
-			new KnowledgeNode(116, DisplayMode.ITEM, "If your manager doesn't value the team's input, make them think it was their idea by asking them questions leading to it."), //Needs examples
-			new KnowledgeNode(117, DisplayMode.ITEM, "Customers, stakeholders, and managers assign different weights to their values (such as cost and efficiency); you may have to search for benefits to your idea from different perspectives in order for it to be accepted."), //Needs examples
-		], false), 
-		new KnowledgeNode(1, DisplayMode.ACCORDION, "<label><h2>Leadership</h2></label><section class='children'></section>", [
-			new KnowledgeNode(101, DisplayMode.ITEM, "Be nice to your underlings, but not <i>too</i> nice."),
 			new KnowledgeNode(118, DisplayMode.ITEM, "Knowing how to lead the team helps you be a part of the team."),
 			new KnowledgeNode(119, DisplayMode.ITEM, "Praise others' creativity or work ethic or at least show appreciation for their efforts when you're tempted to criticize their work."),
 			new KnowledgeNode(120, DisplayMode.ITEM, "You can memorize your own set of management phrases and praises. <a data-index='0'></a> <a data-index='1'></a>", [
@@ -364,11 +362,56 @@ document.body.onload = function() {
 			]),
 			
 		], false), 
-		new KnowledgeNode(2, DisplayMode.ACCORDION, "<label><h2>Design</h2></label><section class='children'></section>", [
-			new KnowledgeNode(102, DisplayMode.ITEM, "Read a book <a data-index='0'></a> for best results.", [
-				new KnowledgeNode(103, DisplayMode.POP, "I recommend <a href='https://www.amazon.com/Design-Everyday-Things-Revised-Expanded-ebook/dp/B00E257T6C'>The Design of Everyday Things</a>. This is a wordy blurb because I like blurbs that are very wordy and extremely long and paragraph-like. It's entirely possible that tooltips of this nature could be very long like this one, and so I need to test to make sure that such long tooltips look acceptable.")
-			])
-		], false)
+		makeTopLevelCategoryNode("Teamwork", [
+			new KnowledgeNode(113, DisplayMode.ACCORDION, "Software development is as much dealing with human psychology, such as preventing mistakes, as it is writing software.", [
+				new KnowledgeNode(123, DisplayMode.ITEM, "Development processes are designed to reduce human mistakes."),
+				new KnowledgeNode(124, DisplayMode.ITEM, "Automation is designed to prevent human mistakes."),
+				new KnowledgeNode(125, DisplayMode.ITEM, "Type safety and other guarantees (like those central to the design philosophy of languages like Rust and Go) identify mistakes sooner."),
+			]),
+			new KnowledgeNode(100, DisplayMode.ACCORDION, "Be slow to cast blame.", [
+				new KnowledgeNode(104, DisplayMode.ITEM, "Don't blame the user before blaming the design <a data-index='0'></a>.", [
+					new KnowledgeNode(105, DisplayMode.POP, "<a href='https://www.amazon.com/Design-Everyday-Things-Revised-Expanded-ebook/dp/B00E257T6C'>The Design of Everyday Things</a>")]),
+				new KnowledgeNode(106, DisplayMode.ITEM, "Admit your mistakes for the sake of process improvement and learning <a data-index='0'></a>.", [
+					creatingAwarenessPop = new KnowledgeNode(107, DisplayMode.POP, "<a href='https://accu.org/index.php/journals/1436'>Creating Awareness</a>")]),
+				new KnowledgeNode(108, DisplayMode.ITEM, "Even if you cast blame only to inject humor, ensure that you also quickly follow up with sharing the blame or pointing out that mistakes can happen to anyone, because your jokes will be taken personally and can quickly lead to a hostile environment."),
+			]),
+			new KnowledgeNode(109, DisplayMode.ACCORDION, "Keep a document of lessons learned.", [
+				new KnowledgeNode(110, DisplayMode.ITEM, "Log everything you can, because without data, proper studies are impossible. <a data-index='0'></a>", [creatingAwarenessPop]),
+				new KnowledgeNode(111, DisplayMode.ITEM, "Checklists and 'lessons learned' documents help because schools/authors/humans only have so much time/energy/memory and so much they can spontaneously recall or teach you about."),
+				new KnowledgeNode(112, DisplayMode.ITEM, "A good document of lessons learned could rapidly teach a young developer lessons that they otherwise may never learn or may learn only after many years of experience, as well as reminding you of lessons you once learned and may have forgotten."),
+			]),
+			new KnowledgeNode(114, DisplayMode.ITEM, "A good developer is polite and considerate in the line of duty. <a data-index='0'></a>", [
+				new KnowledgeNode(115, DisplayMode.POP, "Political correctness is intended to reduce the unnecessary involvement of negative emotions, which block progress.") //Needs examples
+			]),
+			new KnowledgeNode(116, DisplayMode.ITEM, "If your manager doesn't value the team's input, make them think it was their idea by asking them questions leading to it."), //Needs examples
+			new KnowledgeNode(117, DisplayMode.ITEM, "Customers, stakeholders, and managers assign different weights to their values (such as cost and efficiency); you may have to search for benefits to your idea from different perspectives in order for it to be accepted."), //Needs examples
+		]), 
+		makeTopLevelCategoryNode("Architecture", [
+			new KnowledgeNode(132, DisplayMode.ITEM, "To-do"),
+		]),
+		makeTopLevelCategoryNode("Design", [
+			new KnowledgeNode(102, DisplayMode.ITEM, "Read a book <a data-index='0'></a> for best results. (This is a temporary item until the category can be fleshed out.)", [
+				new KnowledgeNode(103, DisplayMode.POP, "I recommend <a href='https://www.amazon.com/Design-Everyday-Things-Revised-Expanded-ebook/dp/B00E257T6C'>The Design of Everyday Things</a>."),
+			]),
+		]), 
+		makeTopLevelCategoryNode("Legal", [
+			new KnowledgeNode(133, DisplayMode.ITEM, "To-do"),
+		]),
+		makeTopLevelCategoryNode("Programming", [
+			new KnowledgeNode(134, DisplayMode.ITEM, "To-do"),
+		]),
+		makeTopLevelCategoryNode("Documenting", [
+			new KnowledgeNode(135, DisplayMode.ITEM, "To-do"),
+		]),
+		makeTopLevelCategoryNode("Optimizing", [
+			new KnowledgeNode(136, DisplayMode.ITEM, "To-do"),
+		]),
+		makeTopLevelCategoryNode("Testing", [
+			new KnowledgeNode(137, DisplayMode.ITEM, "To-do"),
+		]),
+		makeTopLevelCategoryNode("Publishing", [
+			new KnowledgeNode(138, DisplayMode.ITEM, "To-do"),
+		]),
 	];
 	
 	//Add the major section nodes to the body
@@ -431,8 +474,8 @@ window.onbeforeunload = function(event) { //TODO: This doesn't occur if you hit 
 
 //Updating this project:
 //Update this constant when you add a KnowledgeNode (for the sake of the next person who wants to add KnowledgeNodes or if someone removes the most recently added one that was published):
-const highestUsedId = 125;
-//Nodes should identify facts, ideas, principles, "best practices," shortcomings, and reasonable alteratives.
+const highestUsedId = 138;
+//Nodes should identify facts, ideas, principles, "best practices," shortcomings, and reasonable alteratives (aiding in pragmatism).
 //Keep reasoning (if more than a few words), more esoteric knowledge (language-, domain-, or algorithm-specific), and examples in out-of-the-way places (like Pop items) while remembering that they may be independently displayed.
 //Due to the vast array of languages, domains, and algorithms in existence, forks of this project (with none of the original KnowledgeNodes) may be necessary for anything that doesn't generalize well.
 //Top-level categories don't have to make statements or suggestions, but others should do so to the extent feasible.
@@ -440,20 +483,6 @@ const highestUsedId = 125;
 //Try to reduce repeat items by combining similar ones with a phrasing that allows them to apply to both, and then use the same item in both places.
 
 /*
-TODO: Categories may include things like: job hunting, communication/people skills/meetings, management, brainstorming/planning, requirements, user interface/experience design, architecture, implementation, optimization, documentation, legal (for which I have very few tips, so hopefully a proper legal authority can contribute).
-
-Combine with this 'avenues of potential improvement' list I made a few weeks ago:
-People skills (communication, attitude, standards like work ethic)
-Project management (planning, project division into tickets, estimating time)
-Architecture (design tools, design patterns, new use case foresight)
-Design (design tools, design patterns, algorithm comprehension, technologies)
-Programming (coding tools, technologies, languages)
-Optimizing (algorithm comprehension, compiler comprehension, hardware comprehension)
-Testing (testing tools, tester mindset)
-Publishing (publishing tools, configuration)
-
-TODO: Sort categories roughly in chronological order.
-
 -----------------------------------
 Knowledge items that need formatted
 -----------------------------------
