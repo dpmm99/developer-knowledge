@@ -360,7 +360,9 @@ document.body.onload = function() {
 				new KnowledgeNode(121, DisplayMode.POP, "Example: &quot;That's an excellent idea. Like all ideas, however, it does have cons--can you tell us about the negatives and why you believe this idea will work well despite them?&quot;"), //TODO: Use a new type of node for these
 				new KnowledgeNode(122, DisplayMode.POP, "Example: &quot;If you would, please teach me and help me understand this,&quot; instead of &quot;That doesn't make sense.&quot;"),
 			]),
-			
+			new KnowledgeNode(139, DisplayMode.ITEM, "Stand up when speaking to a group. <a data-index='0'></a>", [
+				new KnowledgeNode(140, DisplayMode.POP, "<a href='https://dl.acm.org/citation.cfm?id=1550898'>97 Things Every Software Architect Should Know</a>")
+			]),
 		], false), 
 		makeTopLevelCategoryNode("Teamwork", [
 			new KnowledgeNode(113, DisplayMode.ACCORDION, "Software development is as much dealing with human psychology, such as preventing mistakes, as it is writing software.", [
@@ -474,7 +476,7 @@ window.onbeforeunload = function(event) { //TODO: This doesn't occur if you hit 
 
 //Updating this project:
 //Update this constant when you add a KnowledgeNode (for the sake of the next person who wants to add KnowledgeNodes or if someone removes the most recently added one that was published):
-const highestUsedId = 138;
+const highestUsedId = 139;
 //Nodes should identify facts, ideas, principles, "best practices," shortcomings, and reasonable alteratives (aiding in pragmatism).
 //Keep reasoning (if more than a few words), more esoteric knowledge (language-, domain-, or algorithm-specific), and examples in out-of-the-way places (like Pop items) while remembering that they may be independently displayed.
 //Due to the vast array of languages, domains, and algorithms in existence, forks of this project (with none of the original KnowledgeNodes) may be necessary for anything that doesn't generalize well.
