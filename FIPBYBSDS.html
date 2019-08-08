@@ -27,6 +27,9 @@ h2 {
 	cursor: pointer;
 	content: '\25ba';
 }
+.accordion > .arrow:focus {
+	color: red; /*Make it esay to see when the user has an arrow in-focus*/
+}
 
 .pop-button {
 	border-radius: 50%;
@@ -222,7 +225,9 @@ class KnowledgeNode {
 				//Accordion expansion
 				var arrow = document.createElement("span");
 				arrow.classList.add("arrow");
+				arrow.tabIndex = 0; //Allow the user to focus on the arrow (in source order). Accessibility!
 				arrow.onclick = (event) => toggleAccordion(event);
+				//TODO: Make sure pressing space and pressing enter result in the same thing as a click
 				accordion.insertBefore(arrow, accordion.firstChild);
 				
 				accordion.classList.add("accordion");
@@ -242,6 +247,9 @@ class KnowledgeNode {
 					this.popOpen(event);
 					event.stopPropagation(); //Otherwise, the click event passes on to the label, which checks or unchecks the parent item's checkbox.
 				}
+				pop.tabIndex = 0; //Allow the user to focus on the pseudo-link (in source order). Accessibility!
+				//TODO: I think Safari won't let you click on an 'a' tag without a href attribute. Fix that.
+				//TODO: Make sure pressing space and pressing enter result in the same thing as a click
 				
 				return pop;
 				break;
