@@ -180,8 +180,6 @@ class KnowledgeNode {
 			
 			case DisplayMode.ACCORDION:
 				var accordion = document.createElement("div");
-				accordion.classList.add("accordion");
-				accordion.classList.add("collapsed"); //TODO: Might want to expand to show all not-already-checked nodes. Maybe not. Maybe there should be an "expand children" button. Dunno.
 				accordion.innerHTML = this.content;
 				
 				//Warning: if you have a class='children' element, you should have a label tag, too.
@@ -189,8 +187,8 @@ class KnowledgeNode {
 				if (!label) {
 					//If there's no label inside the accordion, wrap the entire thing with a label (before we add the 'children' element).
 					label = document.createElement("label");
-					label.appendChild(accordion);
 					accordion = document.createElement("div");
+					label.innerHTML = this.content; //Don't include the extra div (which would put the text on a different line from the label)
 					accordion.appendChild(label);
 					//TODO: Check for a class='children' inside the label here, move it to after the label, and then remove the above warning.
 				}
@@ -227,6 +225,9 @@ class KnowledgeNode {
 				arrow.onclick = (event) => toggleAccordion(event);
 				accordion.insertBefore(arrow, accordion.firstChild);
 				
+				accordion.classList.add("accordion");
+				accordion.classList.add("collapsed"); //TODO: Might want to expand to show all not-already-checked nodes. Maybe not. Maybe there should be an "expand children" button. Dunno.
+
 				return accordion;
 				break;
 			
