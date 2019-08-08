@@ -342,13 +342,37 @@ document.body.onload = function() {
 			])
 		]),
 		makeTopLevelCategoryNode("Job Hunting", [
-			new KnowledgeNode(129, DisplayMode.ITEM, "To-do"),
+			new KnowledgeNode(129, DisplayMode.ITEM, "Technologies and years of experience are usually the main hiring criteria. <a data-index='0'></a>", [
+				new KnowledgeNode(150, DisplayMode.POP, "<a href='https://www.joelonsoftware.com/2006/09/08/sorting-resumes-2/'>Sorting Resumes</a>"),
+			]),
+			new KnowledgeNode(151, DisplayMode.ITEM, "Experience with uncommon technologies/languages like COBOL may offer fewer opportunities but significantly higher pay."),
 		]),
 		makeTopLevelCategoryNode("Requirements", [
 			new KnowledgeNode(130, DisplayMode.ITEM, "To-do"),
 		]),
 		makeTopLevelCategoryNode("Planning", [
-			new KnowledgeNode(131, DisplayMode.ITEM, "To-do"),
+			new KnowledgeNode(131, DisplayMode.ACCORDION, "Automate everything that reasonbly can be automated.", [
+				new KnowledgeNode(140, DisplayMode.ITEM, "If it takes more than two actions to perform a repeated task, it should probably be automated."),
+				new KnowledgeNode(141, DisplayMode.ITEM, "Automation scripts also simultaneously act as documentation and reduce the need for humans to look at documentation."),
+				new KnowledgeNode(142, DisplayMode.ITEM, "If it takes more than two actions to perform a repeated task, it should probably be automated."),
+				new KnowledgeNode(143, DisplayMode.ITEM, "Automating infrequent tasks is roughly as important as automating frequent ones, because humans forget less frequent things more easily."),
+				new KnowledgeNode(144, DisplayMode.ITEM, "Automate pulling the code, tools, and dependencies to help new team members get involved."),
+				new KnowledgeNode(145, DisplayMode.ITEM, "Automate code formatting to maintain consistent style and avoid merge conflicts caused by reformatting."),
+				new KnowledgeNode(146, DisplayMode.ITEM, "Automate static analysis to maintain code quality."),
+				new KnowledgeNode(147, DisplayMode.ITEM, "Automate the build process."),
+				new KnowledgeNode(148, DisplayMode.ITEM, "Automate test execution to reduce broken commits and repeat bugs."),
+				new KnowledgeNode(149, DisplayMode.ITEM, "Automate publishing, including packaging of resources if not done during the build."),
+			]),
+			new KnowledgeNode(152, DisplayMode.ACCORDION, "All decisions come with trade-offs.", [
+				new KnowledgeNode(153, DisplayMode.ITEM, "Ease of coding often has an inverse relationship with runtime efficiency. <a data-index='0'></a> <a data-index='1'></a>", [
+					new KnowledgeNode(157, DisplayMode.POP, "Garbage collection, exceptions, preemptive scheduling, and even parallel processing have their own costs."),
+					new KnowledgeNode(158, DisplayMode.POP, "Benchmark rather than speculating whenever efficiency is a concern."),
+				]),
+				new KnowledgeNode(154, DisplayMode.ITEM, "Most technologies don't advertise their potentially detrimental aspects."),
+				new KnowledgeNode(155, DisplayMode.ITEM, "Things that improve maintainability (or any software quality metric) in one way can also hurt it worse in another way. <a data-index='0'></a>", [
+					new KnowledgeNode(156, DisplayMode.POP, "<a href='https://blogs.msdn.microsoft.com/gabriel_morgan/2007/03/20/implementing-system-quality-attributes/'>Implementing System Quality Attributes</a>"),
+				]),
+			]),
 		]),
 		makeTopLevelCategoryNode("Leadership", [
 			new KnowledgeNode(101, DisplayMode.ITEM, "Consider the human feelings of those under your lead, but do not forget the project priorities. <a data-index='0'></a>", [
@@ -361,7 +385,7 @@ document.body.onload = function() {
 				new KnowledgeNode(122, DisplayMode.POP, "Example: &quot;If you would, please teach me and help me understand this,&quot; instead of &quot;That doesn't make sense.&quot;"),
 			]),
 			new KnowledgeNode(139, DisplayMode.ITEM, "Stand up when speaking to a group. <a data-index='0'></a>", [
-				new KnowledgeNode(140, DisplayMode.POP, "<a href='https://dl.acm.org/citation.cfm?id=1550898'>97 Things Every Software Architect Should Know</a>")
+				new KnowledgeNode(159, DisplayMode.POP, "<a href='https://dl.acm.org/citation.cfm?id=1550898'>97 Things Every Software Architect Should Know</a>")
 			]),
 		], false), 
 		makeTopLevelCategoryNode("Teamwork", [
@@ -476,7 +500,7 @@ window.onbeforeunload = function(event) { //TODO: This doesn't occur if you hit 
 
 //Updating this project:
 //Update this constant when you add a KnowledgeNode (for the sake of the next person who wants to add KnowledgeNodes or if someone removes the most recently added one that was published):
-const highestUsedId = 139;
+const highestUsedId = 159;
 //Nodes should identify facts, ideas, principles, "best practices," shortcomings, and reasonable alteratives (aiding in pragmatism).
 //Keep reasoning (if more than a few words), more esoteric knowledge (language-, domain-, or algorithm-specific), and examples in out-of-the-way places (like Pop items) while remembering that they may be independently displayed.
 //Due to the vast array of languages, domains, and algorithms in existence, forks of this project (with none of the original KnowledgeNodes) may be necessary for anything that doesn't generalize well.
@@ -493,8 +517,6 @@ Being a great developer requires considering the human aspects of yourself, your
  
 Deflect subtly and play the politics game, keeping the customer's best interests in mind.
 
-People hire based on technologies despite that what programmers do best is learn new tech. As such, knowing old languages like COBOL can land you a high-paid position.
-All decisions come with trade-offs. New, immature technologies tend to be inefficient, and most technologies don't advertise their glaring flaws. Things that improve maintainability in one way can also hurt it worse in another way. [See quality attribute matrix for general examples]
 Maintaining a healthy body and mind is paramount to being a good developer, and that requires sleep, exercise, nutrition, and ergonomics. Being a considerate person is extremely important, too (see assertion #1 above).
 Guidelines, principles, and best practices are not rules; they're not perfect and are not meant to be the best answer in every situation. What's always best is to weigh your options in context. The same applies for tools, technologies, and methodologies. Additionally, they're very hard to study, so you can't be sure how much they help solely based on speculation of their pros and cons [https://accu.org/index.php/journals/1547]. [Some discussion of the dubious benefits of pair programming: https://accu.org/index.php/journals/1983] [Some discussion of the difficulties involved in agile: https://accu.org/index.php/journals/2003]
 Best practices and principles include KISS [Keep It Stupid-Simple], SOLID [Single Responsibility; Open/Closed; Liskov Substitution; Interface Segregation; Dependency Inversion: https://accu.org/index.php/journals/1957], DRY [Don't Repeat Yourself] [Cases to ignore DRY: https://accu.org/index.php/journals/2662], consistency, loose coupling (and dependency injection), leaky abstractions [https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions/], logic and documentation locality... Facts include "nothing is as simple as it seems." [https://www.joelonsoftware.com/2002/03/04/nothing-is-as-simple-as-it-seems/]
@@ -519,8 +541,6 @@ Remember your potential numeric ranges and font sizes when designing visuals lik
 **Globalization (language, encodings, decimals and commas, time zones, extra space for longer languages, right-to-left, fonts)
 **Parallel execution
 **Bonus: famous catch phrases. ITHare: Your Mileage May Vary. Lucian Radu Teodorescu (Do Repeat Yourself on ACCU): Don't Overdo It.
-Automate everything that reasonably can be automated, such as pulling the code and all the tools and dependencies (which helps new team members get up to speed), building, test execution (which can be run during check-in), code formatting (which can be run constantly or during the build process), static analysis, and publishing (including packaging resources). If it takes more than two tasks, it's probably too much work. This acts as documentation, reducing unspoken knowledge. Infrequent things are just as important to automate as frequent things because humans forget them more easily.
-Think about everything.
 */
 
 //TODO: Go through the above items, check that they fit the project concept, and format them as code.
