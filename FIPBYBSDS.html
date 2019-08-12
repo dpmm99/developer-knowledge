@@ -106,6 +106,11 @@ input[type="checkbox"] {
 </div>
 <section id="masternode"></section>
 
+<div style="position:fixed; bottom: 0; left: 0">
+<button type="button" onclick="saveProgressAsFile()">Save progress as file</button>
+<input type="file" onchange="loadProgressFile(event)" accept=".json">
+</div>
+
 <script>
 /**
  * Enum for possible appearances of a KnowledgeNode
@@ -229,7 +234,6 @@ class KnowledgeNode {
 				
 				//Checkbox
 				if (this.hasCheckbox) label.insertBefore(this.makeCheckbox(), label.firstChild);
-				//TODO: If we don't have a checkbox, would it be right for clicking the text to make the accordion expand/collapse? It might introduce perceived internal consistency since clicking other items links to the checkbox... but without that feature, it's externally inconsistent.
 				
 				//Accordion expansion
 				var arrow = document.createElement("span");
@@ -553,6 +557,61 @@ window.onbeforeunload = function(event) { //TODO: This doesn't occur if you hit 
 	}
 };
 
+function saveProgressAsFile() {
+	var idsAndDates = getCheckedItems();
+	idsAndDates.title = "FIPBYBSDS";
+	saveObject(idsAndDates);
+}
+
+function loadProgressFile(event) {
+	if (event.target.files.length == 1) {
+		if (event.target.files[0].size > 500000) { //Check for reasonable size
+			alert("This file appears to be too large to have been saved from this application.");
+			return;
+		}
+		
+		var reader = new FileReader();
+		reader.onload = (file) => {
+			var data = JSON.parse(file.target.result);
+			//It should be an array, and the first element shouldn't have an ID of 0 (that one isn't checkable anyway) or an empty date.
+			if (!data.length || !data[0].id || !data[0].date) {
+				alert("This file does not appear to have originated from this application.");
+				return;
+			}
+			
+			//For a full reload, we'll clear out the existing nodes' checked state first.
+			for (var x = 0; x < KnowledgeNode.allNodes.length; x++) {
+				if (KnowledgeNode.allNodes[x]) {
+					KnowledgeNode.allNodes[x].checked = null;
+					//TODO: Update DOM
+				}
+			}
+			
+			for (var x = 0; x < data.length; x++) {
+				if (KnowledgeNode.allNodes[data[x].id]) {
+					KnowledgeNode.allNodes[data[x].id].checked = new Date(data[x].date);
+					//TODO: Update DOM
+				} else {
+					console.log("Unknown ID " + data[x].id + "; this item may have been removed.");
+				}
+			}
+		};
+		reader.readAsText(event.target.files[0]);
+	}
+}
+
+//Copied from a character build planner project
+function saveObject(obj) { //Save the given object as a JSON file. If it has a title or name property, that will be used as the filename.
+	if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+		window.navigator.msSaveOrOpenBlob(new Blob([JSON.stringify(obj)], 'application/json'));
+	} else {
+		document.body.insertAdjacentHTML("beforeend", "<a style='display:none' href='data:text/plain;charset=utf-8," + encodeURIComponent(JSON.stringify(obj)) + "' download='" + (obj.title || obj.name || "build") + ".json' id='dllink'></a>");
+		var l = document.getElementById("dllink");
+		l.click();
+		l.remove();
+	}
+}
+
 //Updating this project:
 //Update this constant when you add a KnowledgeNode (for the sake of the next person who wants to add KnowledgeNodes or if someone removes the most recently added one that was published):
 const highestUsedId = 159;
@@ -600,7 +659,6 @@ Remember your potential numeric ranges and font sizes when designing visuals lik
 
 //TODO: Go through the above items, check that they fit the project concept, and format them as code.
 //TODO: Specify a standard for explanatory reasoning that doesn't qualify as a standalone knowledge item. (Basically, a Pop without a checkbox and with a "Why?" or "Examples" button instead of a "?" or whatever we settle on for references/external links to in-depth reasoning and examples.)
-//TODO: Allow downloading + restoring the state of all your checkboxes (this feature plus the automatic localStorage one together, from the user's perspective, roughly equate to using a database while maintaining purely-local functionality for guaranteed privacy and offline use)
 //TODO: Offer a link to continue where you left off (go to the most recently checked item)
 /*Wishlist:
 Voting
