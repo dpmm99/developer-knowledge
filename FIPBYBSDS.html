@@ -8,20 +8,19 @@ h2 {
 }
 
 .children {
-	margin-left: 1em;
-}
-
-.accordion > :not(.children) { /*Any direct descendants of the accordion container, except the children list, have the pointer*/
-	/*cursor: pointer;*/
+	margin-left: 2em;
 }
 
 .accordion.collapsed .children {
 	display: none;
 }
 
-.accordion > .arrow:before {
+.accordion > .arrow {
 	cursor: pointer;
+}
+.accordion > .arrow:before {
 	content: '\25bc';
+	font-size: 150%;
 }
 .accordion.collapsed > .arrow:before {
 	cursor: pointer;
@@ -86,14 +85,24 @@ h2 {
 		column-count: 4;
 	}
 }
+
+/*Give the checkboxes larger targets*/
+input[type="checkbox"] {
+	height: 2em;
+	width: 2em;
+	vertical-align: middle;
+	margin-top: 0px;
+}
 </style>
 </head>
 <body>
 
 <h1>Facts, Ideas, and Principles for Becoming Your Best (Software Developer) Self</h1>
 <div class="columnize">
-<p>There is a vast amount of knowledge in the world, but much of it is sparsely distributed through wordy blog entries, articles, and books. The authors of these writings, as good authors tend to do, offer many examples and in-depth discussion of the concepts. However, most compositions cover a limited selection of concepts within the composition's already limited scope. This is not conducive to already knowledgeable individuals refreshing their knowledge or looking for realizations that have thus far escaped their judgment, nor does it function as guidance for novices seeking direction. As such, I offer this dense collection of a broad variety of facts, ideas, and principles in the hope that it can be a powerful, concise reference for experienced software developers (and related individuals) in their journey to become masters of all things surrounding their profession.</p>
-<p>This page provides checkboxes to record your progress as you read individual items. The date and time of the moment you check each checkbox is saved in local storage. Because one can read through the items at any level or read the high-level items in one pass and the lower-level ones in another pass, consider each checkbox to apply only to the text directly adjacent to it.</p>
+<!--Had to use non-breaking spaces to indent because the 'columns' style doesn't work well with non-inline elements, and inlined paragraphs don't obey text-indent (other than the first paragraph)-->
+<p>&nbsp; &nbsp; &nbsp; There is a vast amount of knowledge in the world, but much of it is sparsely distributed through wordy blog entries, articles, and books. The authors of these writings, as good authors tend to do, offer many examples and in-depth discussion of the concepts. However, most compositions cover a limited selection of concepts within the composition's already limited scope. This is not conducive to already knowledgeable individuals refreshing their knowledge or looking for realizations that have thus far escaped their judgment, nor does it function as guidance for novices seeking direction. As such, I offer this dense collection of a broad variety of facts, ideas, and principles in the hope that it can be a powerful, concise reference for experienced software developers (and related individuals) in their journey to become masters of all things surrounding their profession.</p>
+<br>
+<p>&nbsp; &nbsp; &nbsp; This page provides checkboxes to record your progress as you read individual items. The date and time of the moment you check each checkbox is saved in local storage. Because one can read through the items at any level or read the high-level items in one pass and the lower-level ones in another pass, consider each checkbox to apply only to the text directly adjacent to it.</p>
 </div>
 <section id="masternode"></section>
 
@@ -187,7 +196,7 @@ class KnowledgeNode {
 				
 				//Warning: if you have a class='children' element, you should have a label tag, too.
 				var label = accordion.getElementsByTagName("label")[0];
-				if (!label) {
+				if (!label && this.hasCheckbox) {
 					//If there's no label inside the accordion, wrap the entire thing with a label (before we add the 'children' element).
 					label = document.createElement("label");
 					accordion = document.createElement("div");
@@ -227,11 +236,27 @@ class KnowledgeNode {
 				arrow.classList.add("arrow");
 				arrow.tabIndex = 0; //Allow the user to focus on the arrow (in source order). Accessibility!
 				arrow.onclick = (event) => toggleAccordion(event);
-				//TODO: Make sure pressing space and pressing enter result in the same thing as a click
+				
+				//Make sure pressing space and pressing enter result in the same thing as a click
+				arrow.onkeydown = (event) => {
+					if (event.key == "Enter" || event.key == " ") {
+						arrow.click();
+						event.preventDefault();
+					}
+				};
+				
 				accordion.insertBefore(arrow, accordion.firstChild);
 				
 				accordion.classList.add("accordion");
 				accordion.classList.add("collapsed"); //TODO: Might want to expand to show all not-already-checked nodes. Maybe not. Maybe there should be an "expand children" button. Dunno.
+				
+				//If there's a header element inside but no checkbox, make the header element also expand/collapse the accordion.
+				if (!this.hasCheckbox) {
+					var header = accordion.getElementsByTagName("h2");
+					if (header.length) {
+						arrow.appendChild(header[0]); //Also removes it from its previous location
+					}
+				}
 
 				return accordion;
 				break;
@@ -246,10 +271,18 @@ class KnowledgeNode {
 				pop.onclick = pop.onmouseenter = (event) => {
 					this.popOpen(event);
 					event.stopPropagation(); //Otherwise, the click event passes on to the label, which checks or unchecks the parent item's checkbox.
+					return false;
 				}
 				pop.tabIndex = 0; //Allow the user to focus on the pseudo-link (in source order). Accessibility!
 				//TODO: I think Safari won't let you click on an 'a' tag without a href attribute. Fix that.
-				//TODO: Make sure pressing space and pressing enter result in the same thing as a click
+				
+				//Make sure pressing space and pressing enter result in the same thing as a click
+				pop.onkeydown = (event) => {
+					if (event.key == "Enter" || event.key == " ") {
+						pop.click();
+						event.preventDefault();
+					}
+				};
 				
 				return pop;
 				break;
@@ -310,12 +343,22 @@ class KnowledgeNode {
 
 		document.body.appendChild(backdrop);
 		document.body.appendChild(panel);
+		
+		if (this.hasCheckbox) checkbox.focus(); //In case you're using keyboard navigation
 
 		panel.onmouseleave = backdrop.onclick = () => {
 			//Remove the checkbox from our tracking list
 			if (this.hasCheckbox) this.domCheckboxes.splice(this.domCheckboxes.indexOf(checkbox), 1);
 			panel.remove();
 			backdrop.remove();
+		};
+		
+		//Let the escape key close the pop panel
+		panel.onkeydown = (innerEvent) => {
+			if (innerEvent.key == "Escape") {
+				backdrop.click();
+				event.target.focus(); //Put the user's focus back where it was before (for keyboard navigation)
+			}
 		};
 
 		//Make sure the width is no greater than 8x the initial height (for decent proportioning--the final aspect ratio will be much less than 8:1) and no greater than the width of the viewport.
@@ -327,7 +370,10 @@ class KnowledgeNode {
 KnowledgeNode.allNodes = [];
 
 function toggleAccordion(event) {
-	event.target.parentNode.classList.toggle("collapsed");
+	var parent = event.target.parentNode;
+	//Find the accordion parent (currently only needed for top-level, checkbox-free accordions)
+	while (!parent.classList.contains("accordion")) parent = parent.parentNode;
+	parent.classList.toggle("collapsed");
 }
 
 var topNodes = []; //Accessible for easier development.
@@ -360,7 +406,7 @@ document.body.onload = function() {
 			new KnowledgeNode(130, DisplayMode.ITEM, "To-do"),
 		]),
 		makeTopLevelCategoryNode("Planning", [
-			new KnowledgeNode(131, DisplayMode.ACCORDION, "Automate everything that reasonbly can be automated.", [
+			new KnowledgeNode(131, DisplayMode.ACCORDION, "Automate everything that reasonably can be automated.", [
 				new KnowledgeNode(140, DisplayMode.ITEM, "If it takes more than two actions to perform a repeated task, it should probably be automated."),
 				new KnowledgeNode(141, DisplayMode.ITEM, "Automation scripts also simultaneously act as documentation and reduce the need for humans to look at documentation."),
 				new KnowledgeNode(142, DisplayMode.ITEM, "If it takes more than two actions to perform a repeated task, it should probably be automated."),
