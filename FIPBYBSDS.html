@@ -106,8 +106,9 @@ input[type="checkbox"] {
 </div>
 <section id="masternode"></section>
 
-<div style="position:fixed; bottom: 0; left: 0">
+<div style="position:fixed;bottom:0;left:0;background-color:#eee;padding:3px;border-radius:5px;">
 <button type="button" onclick="saveProgressAsFile()">Save progress as file</button>
+Load progress file:
 <input type="file" onchange="loadProgressFile(event)" accept=".json">
 </div>
 
@@ -309,6 +310,18 @@ class KnowledgeNode {
 
 		//TODO: Make all the checkboxes for this KnowledgeNode match the event.target DOM element. There will be repeat non-Pop nodes because mutually exclusive categories don't work as well as tags in reality.
 		//TODO: Add/remove "checked-pop-button" class on POP items when they get checked/unchecked
+	}
+	
+	/**
+	 * Set the state of this node and all its checkboxes. For loading a saved file (since the DOM already exists by then).
+	 * @param {Date} checked A valid Date if the checkbox should be set to checked; null otherwise
+	 */
+	setChecked(checked) {
+		console.assert(checked == null || checked instanceof Date);
+		this.checked = checked;
+		for (var x = 0; x < this.domCheckboxes.length; x++) {
+			this.domCheckboxes[x].checked = checked;
+		}
 	}
 	
 	/**
@@ -582,15 +595,13 @@ function loadProgressFile(event) {
 			//For a full reload, we'll clear out the existing nodes' checked state first.
 			for (var x = 0; x < KnowledgeNode.allNodes.length; x++) {
 				if (KnowledgeNode.allNodes[x]) {
-					KnowledgeNode.allNodes[x].checked = null;
-					//TODO: Update DOM
+					KnowledgeNode.allNodes[x].setChecked(null);
 				}
 			}
 			
 			for (var x = 0; x < data.length; x++) {
 				if (KnowledgeNode.allNodes[data[x].id]) {
-					KnowledgeNode.allNodes[data[x].id].checked = new Date(data[x].date);
-					//TODO: Update DOM
+					KnowledgeNode.allNodes[data[x].id].setChecked(new Date(data[x].date));
 				} else {
 					console.log("Unknown ID " + data[x].id + "; this item may have been removed.");
 				}
@@ -659,6 +670,7 @@ Remember your potential numeric ranges and font sizes when designing visuals lik
 
 //TODO: Go through the above items, check that they fit the project concept, and format them as code.
 //TODO: Specify a standard for explanatory reasoning that doesn't qualify as a standalone knowledge item. (Basically, a Pop without a checkbox and with a "Why?" or "Examples" button instead of a "?" or whatever we settle on for references/external links to in-depth reasoning and examples.)
+//TODO: Allow loading the progress file by drag-and-drop anywhere on the page
 //TODO: Offer a link to continue where you left off (go to the most recently checked item)
 /*Wishlist:
 Voting
