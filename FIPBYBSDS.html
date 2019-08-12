@@ -110,6 +110,7 @@ input[type="checkbox"] {
 <button type="button" onclick="saveProgressAsFile()">Save progress as file</button>
 Load progress file:
 <input type="file" onchange="loadProgressFile(event)" accept=".json">
+<button type="button" onclick="goToLastChecked()">Go to last checked item</button>
 </div>
 
 <script>
@@ -623,6 +624,51 @@ function saveObject(obj) { //Save the given object as a JSON file. If it has a t
 	}
 }
 
+function goToLastChecked() {
+	var lastCheckedNode = null;
+	
+	//Find the most recently checked node
+	for (var x = 0; x < KnowledgeNode.allNodes.length; x++) {
+		if (KnowledgeNode.allNodes[x] && KnowledgeNode.allNodes[x].checked && KnowledgeNode.allNodes[x].domCheckboxes.length && //TODO: Once you pick a way to find Pop-type nodes, drop the domCheckboxes condition
+		(lastCheckedNode == null || KnowledgeNode.allNodes[x].checked > lastCheckedNode.checked)) {
+			lastCheckedNode = KnowledgeNode.allNodes[x];
+		}
+	}
+	
+	if (lastCheckedNode) {
+		//Expand all its parent accordions and then scroll to it
+		//Note: this should find the *first* appearance of the node from the top of the page
+		var node = lastCheckedNode.domCheckboxes[0];
+		while (node.id != "masternode") {
+			node = node.parentNode;
+			if (node.classList.contains("collapsed")) {
+				node.classList.remove("collapsed");
+			}
+		}
+		
+		//Find the first label or paragraph parent and highlight it temporarily
+		node = lastCheckedNode.domCheckboxes[0];
+		while (node.nodeName != "LABEL" && node.nodeName != "P") {
+			node = node.parentNode;
+		}
+		node.style.backgroundColor = "#fbf";
+		node.style.transition = "background-color 1000ms";
+		//Note: it doesn't matter much in this application, but this does introduce concurrency issues.
+		setTimeout(() => {
+			node.style.backgroundColor = "";
+			//Turn transition back off a second later
+			setTimeout(() => {
+				node.style.transition = "";
+			}, 1000);
+		}, 1500);
+
+		lastCheckedNode.domCheckboxes[0].scrollIntoView();
+		
+		//TODO: If it's a Pop-type node, I'll need to come up with another way to locate it.
+		
+	} else alert("No items have been checked.");
+}
+
 //Updating this project:
 //Update this constant when you add a KnowledgeNode (for the sake of the next person who wants to add KnowledgeNodes or if someone removes the most recently added one that was published):
 const highestUsedId = 159;
@@ -671,7 +717,6 @@ Remember your potential numeric ranges and font sizes when designing visuals lik
 //TODO: Go through the above items, check that they fit the project concept, and format them as code.
 //TODO: Specify a standard for explanatory reasoning that doesn't qualify as a standalone knowledge item. (Basically, a Pop without a checkbox and with a "Why?" or "Examples" button instead of a "?" or whatever we settle on for references/external links to in-depth reasoning and examples.)
 //TODO: Allow loading the progress file by drag-and-drop anywhere on the page
-//TODO: Offer a link to continue where you left off (go to the most recently checked item)
 /*Wishlist:
 Voting
 Sorting
