@@ -30,6 +30,15 @@ h2 {
 	color: red; /*Make it esay to see when the user has an arrow in-focus*/
 }
 
+.permalink {
+	text-decoration: none;
+	color: #000;
+	opacity: 0.6;
+}
+.permalink:hover {
+	opacity: 1.0;
+}
+
 .pop-button {
 	border-radius: 50%;
 	background-color: #59f;
@@ -151,6 +160,7 @@ class KnowledgeNode {
 		this.checked = KnowledgeNode.allNodes[this.id] || null; //Normally undefined, but we can fill that array with dates from localStorage when first loading the page, before creating any KnowledgeNodes.
 		this.domCheckboxes = [];
 		this.hasCheckbox = hasCheckbox;
+		this.permalinkTarget = null;
 		
 		//Track all created nodes in a flat list. Ensure that no two nodes have the same ID.
 		//Check either that it doesn't exist or that whatever exists there doesn't have a truthy "id" property (assuming Date won't ever have 'id')
@@ -188,6 +198,10 @@ class KnowledgeNode {
 				
 				//Checkbox
 				item.insertBefore(this.makeCheckbox(), item.firstChild);
+				
+				item.appendChild(this.makePermalink());
+				
+				if (!this.permalinkTarget) this.permalinkTarget = item;
 				
 				//Wrap it all up in a label
 				label = document.createElement("label");
@@ -261,9 +275,13 @@ class KnowledgeNode {
 					var header = accordion.getElementsByTagName("h2");
 					if (header.length) {
 						arrow.appendChild(header[0]); //Also removes it from its previous location
+						header[0].appendChild(this.makePermalink());
 					}
+				} else if (label) {
+					label.appendChild(this.makePermalink());
 				}
 
+				if (!this.permalinkTarget) this.permalinkTarget = accordion;
 				return accordion;
 				break;
 			
@@ -290,6 +308,7 @@ class KnowledgeNode {
 					}
 				};
 				
+				if (!this.permalinkTarget) this.permalinkTarget = pop;
 				return pop;
 				break;
 			
@@ -323,6 +342,29 @@ class KnowledgeNode {
 		for (var x = 0; x < this.domCheckboxes.length; x++) {
 			this.domCheckboxes[x].checked = checked;
 		}
+	}
+	
+	/**
+	 * Create a DOM 'a' tag that gives a permalink to this KnowledgeNode
+	 */
+	makePermalink() {
+		var permalink = document.createElement("a");
+		permalink.classList.add("permalink");
+		permalink.innerHTML = "&#128279;";
+		permalink.href = "#" + this.id; //In case they right-click to copy it
+		permalink.onclick = (event) => {
+			var area = document.createElement("textarea");
+			area.innerText = permalink.href;
+			event.target.appendChild(area); //to avoid scrolling, put it where the cursor is
+			area.focus();
+			area.select();
+			document.execCommand("copy");
+			area.remove();
+			
+			event.stopPropagation();
+			return false;
+		};
+		return permalink;
 	}
 	
 	/**
@@ -521,6 +563,14 @@ document.body.onload = function() {
 	var topFoundId = determineTopId();
 	console.log("Current highest KnowledgeNode ID: " + topFoundId);
 	console.assert(topFoundId <= highestUsedId, "Please update highestUsedId.");
+	
+	//Potentially scroll to a KnowledgeNode
+	if (window.location.hash) { //Make sure the hash is present
+		var id = parseInt(window.location.hash.substr(1));
+		if (!isNaN(id)) { //Make sure the parameter is numeric
+			goToNode(id);
+		}
+	}
 };
 
 //Call this from your browser's dev tools to keep track of the highest ID: determineTopId()
@@ -624,6 +674,46 @@ function saveObject(obj) { //Save the given object as a JSON file. If it has a t
 	}
 }
 
+function goToNode(nodeOrId) {
+	if (!isNaN(nodeOrId)) nodeOrId = KnowledgeNode.allNodes[nodeOrId];
+	
+	//Inform user if ID is invalid
+	if (!(nodeOrId instanceof KnowledgeNode)) {
+		alert("The specified knowledge item does not exist.");
+		return;
+	}
+	
+	//Expand all its parent accordions and then scroll to it
+	//Note: this should find the *first* appearance of the node from the top of the page
+	var node = nodeOrId.permalinkTarget;
+	while (node.id != "masternode") {
+		node = node.parentNode;
+		if (node.classList.contains("collapsed")) {
+			node.classList.remove("collapsed");
+		}
+	}
+	
+	//Find the first label or paragraph parent or div and highlight it temporarily
+	node = nodeOrId.permalinkTarget;
+	while (node.nodeName != "LABEL" && node.nodeName != "P" && node.nodeName != "DIV") {
+		node = node.parentNode;
+	}
+	node.style.backgroundColor = "#fbf";
+	node.style.transition = "background-color 1000ms";
+	//Note: it doesn't matter much in this application, but this does introduce concurrency issues.
+	setTimeout(() => {
+		node.style.backgroundColor = "";
+		//Turn transition back off a second later
+		setTimeout(() => {
+			node.style.transition = "";
+		}, 1000);
+	}, 1500);
+
+	nodeOrId.permalinkTarget.scrollIntoView();
+	
+	//TODO: If it's a Pop-type node or top-level category, I'll need to come up with another way to locate it.
+}
+
 function goToLastChecked() {
 	var lastCheckedNode = null;
 	
@@ -636,36 +726,7 @@ function goToLastChecked() {
 	}
 	
 	if (lastCheckedNode) {
-		//Expand all its parent accordions and then scroll to it
-		//Note: this should find the *first* appearance of the node from the top of the page
-		var node = lastCheckedNode.domCheckboxes[0];
-		while (node.id != "masternode") {
-			node = node.parentNode;
-			if (node.classList.contains("collapsed")) {
-				node.classList.remove("collapsed");
-			}
-		}
-		
-		//Find the first label or paragraph parent and highlight it temporarily
-		node = lastCheckedNode.domCheckboxes[0];
-		while (node.nodeName != "LABEL" && node.nodeName != "P") {
-			node = node.parentNode;
-		}
-		node.style.backgroundColor = "#fbf";
-		node.style.transition = "background-color 1000ms";
-		//Note: it doesn't matter much in this application, but this does introduce concurrency issues.
-		setTimeout(() => {
-			node.style.backgroundColor = "";
-			//Turn transition back off a second later
-			setTimeout(() => {
-				node.style.transition = "";
-			}, 1000);
-		}, 1500);
-
-		lastCheckedNode.domCheckboxes[0].scrollIntoView();
-		
-		//TODO: If it's a Pop-type node, I'll need to come up with another way to locate it.
-		
+		goToNode(lastCheckedNode);
 	} else alert("No items have been checked.");
 }
 
