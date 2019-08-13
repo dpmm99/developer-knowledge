@@ -33,10 +33,20 @@ h2 {
 .permalink {
 	text-decoration: none;
 	color: #000;
+	padding-left: 0.5em;
 	opacity: 0.6;
 }
 .permalink:hover {
 	opacity: 1.0;
+}
+.notice {
+	position: fixed;
+	background-color: #afc;
+	padding: 10px;
+	border-radius: 1em;
+	opacity: 1.0;
+	transition: opacity 1s;
+	z-index: 2;
 }
 
 .pop-button {
@@ -361,9 +371,35 @@ class KnowledgeNode {
 			document.execCommand("copy");
 			area.remove();
 			
+			var notice = document.createElement("div");
+			notice.innerText = "Link copied!";
+			notice.classList.add("notice");
+			document.body.appendChild(notice);
+			
+			//Same positioning code as the Pop panel
+			notice.style.left = Math.max(0, Math.min(event.target.offsetLeft - document.body.scrollLeft - 10 /*notice left padding*/, document.body.clientWidth - notice.offsetWidth)) + "px";
+			notice.style.top = Math.max(0, Math.min(event.target.offsetTop - document.body.scrollTop - 10 /*notice top padding*/, document.body.clientHeight - notice.offsetHeight)) + "px";
+			
+			//Fade out and remove after a moment
+			setTimeout(() => {
+				notice.style.opacity = "0";
+				setTimeout(() => {
+					notice.remove();
+				}, 1000);
+			}, 1500);
+			
 			event.stopPropagation();
 			return false;
 		};
+		
+		permalink.onkeydown = (event) => {
+			if (event.key == "Enter" || event.key == " ") {
+				permalink.click();
+				event.stopPropagation();
+				event.preventDefault();
+			}
+		};
+		
 		return permalink;
 	}
 	
