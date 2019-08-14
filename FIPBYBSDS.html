@@ -112,9 +112,28 @@ input[type="checkbox"] {
 	vertical-align: middle;
 	margin-top: 0px;
 }
+
+#dropzone {
+	position: fixed;
+	right: 0;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	background-color: #000a;
+	padding: 5vw;
+}
+#dropzone > div {
+	height: 100%;
+	border: 3px dashed #fff;
+	box-sizing: border-box;
+	text-align: center;
+	color: #fff;
+	font-size: 200%;
+	line-height: calc(100vh - 10vw);
+}
 </style>
 </head>
-<body>
+<body ondragenter="dragEnter(event)">
 
 <h1>Facts, Ideas, and Principles for Becoming Your Best (Software Developer) Self</h1>
 <div class="columnize">
@@ -128,8 +147,14 @@ input[type="checkbox"] {
 <div style="position:fixed;bottom:0;left:0;background-color:#eee;padding:3px;border-radius:5px;">
 <button type="button" onclick="saveProgressAsFile()">Save progress as file</button>
 Load progress file:
-<input type="file" onchange="loadProgressFile(event)" accept=".json">
+<input type="file" onchange="loadProgressFile(event, event.target.files)" accept=".json">
 <button type="button" onclick="goToLastChecked()">Go to last checked item</button>
+</div>
+
+<div style="display: none;" id="dropzone" ondragleave="setDropZoneVisible(false)" ondragover="dragOver(event)" ondrop="dropInProgressFile(event)">
+<div>
+Drop a progress file anywhere to load it.
+</div>
 </div>
 
 <script>
@@ -330,16 +355,22 @@ class KnowledgeNode {
 	 * @param {bool} checked True if the checkbox was just checked; false if it was just unchecked
 	 */
 	onToggleByUser(checked) {
-		this.checked = checked ? new Date() : null; //Save the time it was checked or nullify if it was unchecked.
+		//Save the time it was checked or nullify if it was unchecked.
+		this.setChecked(checked ? new Date() : null);
 		
 		try {
 			saveToLocalStorage();
+			KnowledgeNode.changedSinceSave = false;
 		} catch {
-			//TODO: unintrusively warn user that they're going to have to save their data manually
+			//Warn user that localStorage doesn't work
+			if (!KnowledgeNode.warned) {
+				var notice = prepareNotice("Saving your progress in the browser's localStorage failed. Please download your progress file at your leisure.", 5000);
+				notice.style.top = notice.style.left = "5px";
+				notice.style.backgroundColor = "#fca";
+				KnowledgeNode.warned = true;
+			}
+			KnowledgeNode.changedSinceSave = true;
 		}
-
-		//TODO: Make all the checkboxes for this KnowledgeNode match the event.target DOM element. There will be repeat non-Pop nodes because mutually exclusive categories don't work as well as tags in reality.
-		//TODO: Add/remove "checked-pop-button" class on POP items when they get checked/unchecked
 	}
 	
 	/**
@@ -352,6 +383,9 @@ class KnowledgeNode {
 		for (var x = 0; x < this.domCheckboxes.length; x++) {
 			this.domCheckboxes[x].checked = checked;
 		}
+		
+		//Add/remove "checked-pop-button" class on POP items when they get checked/unchecked
+		if (this.displayMode == DisplayMode.POP) this.permalinkTarget.classList.toggle("checked-pop-button", checked);
 	}
 	
 	/**
@@ -371,22 +405,11 @@ class KnowledgeNode {
 			document.execCommand("copy");
 			area.remove();
 			
-			var notice = document.createElement("div");
-			notice.innerText = "Link copied!";
-			notice.classList.add("notice");
-			document.body.appendChild(notice);
+			var notice = prepareNotice("Link copied!", 1500);
 			
 			//Same positioning code as the Pop panel
 			notice.style.left = Math.max(0, Math.min(event.target.offsetLeft - document.body.scrollLeft - 10 /*notice left padding*/, document.body.clientWidth - notice.offsetWidth)) + "px";
 			notice.style.top = Math.max(0, Math.min(event.target.offsetTop - document.body.scrollTop - 10 /*notice top padding*/, document.body.clientHeight - notice.offsetHeight)) + "px";
-			
-			//Fade out and remove after a moment
-			setTimeout(() => {
-				notice.style.opacity = "0";
-				setTimeout(() => {
-					notice.remove();
-				}, 1000);
-			}, 1500);
 			
 			event.stopPropagation();
 			return false;
@@ -652,8 +675,11 @@ window.onbeforeunload = function(event) { //TODO: This doesn't occur if you hit 
 	try {
 		saveToLocalStorage();
 	} catch {
-		//TODO: Inform user that saving failed and maybe they want to save manually.
-		//TODO: Only do so if they actually checked boxes, though.
+		//We'll have to get a little intrusive for this exceptional case.
+		//If we don't stop to ask them, they would either have to lose their changes or be forced to download a file without being informed of the reason.
+		if (KnowledgeNode.changedSinceSave && confirm("Saving your progress to localStorage failed. Save it as a file before leaving?")) {
+			saveProgressAsFile();
+		}
 	}
 };
 
@@ -661,11 +687,43 @@ function saveProgressAsFile() {
 	var idsAndDates = getCheckedItems();
 	idsAndDates.title = "FIPBYBSDS";
 	saveObject(idsAndDates);
+	
+	//We can't know if the download succeeded, but it would be obnoxious if we assumed that it did not.
+	KnowledgeNode.changedSinceSave = false;
 }
 
-function loadProgressFile(event) {
-	if (event.target.files.length == 1) {
-		if (event.target.files[0].size > 500000) { //Check for reasonable size
+function dragOver(event) {
+	event.preventDefault();
+}
+
+function dragEnter(event) {
+	//Only show the drop zone if the user is dragging files into the window
+	//We need getAsFile() support (Safari doesn't have it) so only react if it's defined
+	if ([...event.dataTransfer.items].some(p => p.kind == "file") && DataTransferItem.prototype.getAsFile) {
+		setDropZoneVisible(true);
+	}
+}
+
+function dropInProgressFile(event) {
+	//Convert the DataTransferItem
+	loadProgressFile([...event.dataTransfer.items].filter(p => p.kind == "file").map(p => p.getAsFile()));
+	
+	setDropZoneVisible(false);
+	
+	//Don't let the browser try loading the file in its own way
+	event.preventDefault();
+	event.stopPropagation();
+}
+
+function setDropZoneVisible(isVisible) {
+	document.getElementById("dropzone").style.display = isVisible ? "" : "none";
+}
+
+function loadProgressFile(files) {
+	//TODO: Consider a check/warning because if they had progress in localStorage already, it'll be overwritten upon loading progress from a file.
+
+	if (files.length == 1) {
+		if (files[0].size > 500000) { //Check for reasonable size
 			alert("This file appears to be too large to have been saved from this application.");
 			return;
 		}
@@ -694,12 +752,18 @@ function loadProgressFile(event) {
 				}
 			}
 		};
-		reader.readAsText(event.target.files[0]);
-	}
+		reader.readAsText(files[0]);
+	} else if (files.length > 1) {
+		alert("Please only drop in one file.");
+	} //if files.length is 0, there's nothing to do, but it doesn't necessitate a message.
 }
 
-//Copied from a character build planner project
-function saveObject(obj) { //Save the given object as a JSON file. If it has a title or name property, that will be used as the filename.
+/**
+ * Save the given object as a JSON file. If it has a title or name property, that will be used as the filename.
+ * (Copied from a character build planner project.)
+ * @param {object} obj Any JSON.stringify-capable object (which will be saved as a file)
+ */
+function saveObject(obj) {
 	if (window.navigator && window.navigator.msSaveOrOpenBlob) {
 		window.navigator.msSaveOrOpenBlob(new Blob([JSON.stringify(obj)], 'application/json'));
 	} else {
@@ -710,6 +774,10 @@ function saveObject(obj) { //Save the given object as a JSON file. If it has a t
 	}
 }
 
+/**
+ * Unfold and scroll to the specified node or ID. Also highlight the node briefly.
+ * @param {KnowledgeNode or the ID of a KnowledgeNode} nodeOrId Node or ID of a node to navigate to
+ */
 function goToNode(nodeOrId) {
 	if (!isNaN(nodeOrId)) nodeOrId = KnowledgeNode.allNodes[nodeOrId];
 	
@@ -750,6 +818,9 @@ function goToNode(nodeOrId) {
 	//TODO: If it's a Pop-type node or top-level category, I'll need to come up with another way to locate it.
 }
 
+/**
+ * Unfold and scroll to the node with the most recent checked-on date. Also highlight the node briefly.
+ */
 function goToLastChecked() {
 	var lastCheckedNode = null;
 	
@@ -764,6 +835,30 @@ function goToLastChecked() {
 	if (lastCheckedNode) {
 		goToNode(lastCheckedNode);
 	} else alert("No items have been checked.");
+}
+
+/**
+ * Create a notice with the given message (no HTML) and set it to fade away after the given delay.
+ * Note: you'll have to set the position and/or size as desired after calling this.
+ * @param {string} message Text to display (no HTML)
+ * @param {int} delay Milliseconds to display the message before beginning to fade out
+ * @returns the generated notice DOM element
+ */
+function prepareNotice(message, delay) {
+	var notice = document.createElement("div");
+	notice.innerText = message;
+	notice.classList.add("notice");
+	document.body.appendChild(notice);
+	
+	//Fade out and remove after a moment
+	setTimeout(() => {
+		notice.style.opacity = "0";
+		setTimeout(() => {
+			notice.remove();
+		}, 1000);
+	}, delay);
+	
+	return notice;
 }
 
 //Updating this project:
@@ -813,7 +908,6 @@ Remember your potential numeric ranges and font sizes when designing visuals lik
 
 //TODO: Go through the above items, check that they fit the project concept, and format them as code.
 //TODO: Specify a standard for explanatory reasoning that doesn't qualify as a standalone knowledge item. (Basically, a Pop without a checkbox and with a "Why?" or "Examples" button instead of a "?" or whatever we settle on for references/external links to in-depth reasoning and examples.)
-//TODO: Allow loading the progress file by drag-and-drop anywhere on the page
 /*Wishlist:
 Voting
 Sorting
