@@ -147,7 +147,7 @@ input[type="checkbox"] {
 <div style="position:fixed;bottom:0;left:0;background-color:#eee;padding:3px;border-radius:5px;">
 <button type="button" onclick="saveProgressAsFile()">Save progress as file</button>
 Load progress file:
-<input type="file" onchange="loadProgressFile(event, event.target.files)" accept=".json">
+<input type="file" onchange="loadProgressFile(event.target.files)" accept=".json">
 <button type="button" onclick="goToLastChecked()">Go to last checked item</button>
 </div>
 
@@ -814,8 +814,6 @@ function goToNode(nodeOrId) {
 	}, 1500);
 
 	nodeOrId.permalinkTarget.scrollIntoView();
-	
-	//TODO: If it's a Pop-type node or top-level category, I'll need to come up with another way to locate it.
 }
 
 /**
