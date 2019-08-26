@@ -513,7 +513,21 @@ document.body.onload = function() {
 		makeTopLevelCategoryNode("Attitude", [
 			new KnowledgeNode(126, DisplayMode.ITEM, "Practice pragmatism, not dogmatism. <a data-index='0'></a>", [
 				new KnowledgeNode(127, DisplayMode.POP, "Dogmatism means you see concepts as rules to be followed without context. A pragmatist considers the pros and cons of each approach in-context and seeks the best answer for each specific situation."),
-			])
+			]),
+			new KnowledgeNode(161, DisplayMode.ACCORDION, "Maintaining a healthy body and mind is paramount to being a good developer.", [
+				new KnowledgeNode(162, DisplayMode.ITEM, "Sleep well. <a data-index='0'></a> <a data-index='1'></a>", [
+					new KnowledgeNode(169, DisplayMode.POP, "Even <a href='https://www.ncbi.nlm.nih.gov/pubmed/10704520'>jet lag</a> can harm your cognitive performance."),
+					new KnowledgeNode(170, DisplayMode.POP, "The amount <a href='https://www.medicalnewstoday.com/articles/301879.php'>and quality</a> of your sleep affects your ability to think and your attitude.")
+				]),
+				new KnowledgeNode(163, DisplayMode.ITEM, "Eat well. <a data-index='0'></a> <a data-index='1'></a>", [
+					new KnowledgeNode(167, DisplayMode.POP, "Many studies such as <a href='https://www.sciencedirect.com/science/article/abs/pii/S1053811918321517?via%3Dihub#ack0010'>this one</a> have identified links between nutrition and cognitive performance."),
+					new KnowledgeNode(168, DisplayMode.POP, "Results from <a href='https://github.com/dpmm99/Omlenet'>Omlenet</a> suggest that obtaining the recommended amounts of nutrients is very difficult."),
+				]),
+				new KnowledgeNode(164, DisplayMode.ITEM, "Exercise often. <a data-index='0'></a>", [
+					new KnowledgeNode(166, DisplayMode.POP, "Check <a href='https://medicalxpress.com/news/2019-07-reveals-short-bout-brain-function.html'>medical science articles</a>")
+				]),
+				new KnowledgeNode(165, DisplayMode.ITEM, "Maintain good posture. This includes not only how you hold your head or how high to have your monitors, but also the angle of your wrist when you use a mouse, keyboard, or phone."), //TODO: flesh out the individual considerations (maybe include a picture)
+			]),
 		]),
 		makeTopLevelCategoryNode("Job Hunting", [
 			new KnowledgeNode(129, DisplayMode.ITEM, "Technologies and years of experience are usually the main hiring criteria. <a data-index='0'></a>", [
@@ -585,6 +599,12 @@ document.body.onload = function() {
 			]),
 			new KnowledgeNode(116, DisplayMode.ITEM, "If your manager doesn't value the team's input, make them think it was their idea by asking them questions leading to it."), //Needs examples
 			new KnowledgeNode(117, DisplayMode.ITEM, "Customers, stakeholders, and managers assign different weights to their values (such as cost and efficiency); you may have to search for benefits to your idea from different perspectives in order for it to be accepted."), //Needs examples
+			new KnowledgeNode(160, DisplayMode.ITEM, "When reporting a problem, include multiple potential solutions."),
+			new KnowledgeNode(171, DisplayMode.ITEM, "Avoid the bystander effect <a data-index='0'></a> by making improvement your responsibility. <a data-index='1'></a> <a data-index='2'></a>", [
+				new KnowledgeNode(172, DisplayMode.POP, "<a href='https://en.wikipedia.org/wiki/Bystander_effect'>The bystander effect</a> can be described as the inverse relationship between the number of people who are present and the number of people who take action. (Note: The Wikipedia article currently offers invalid counter-evidence by comparing absolute number of people who help in one study to the <i>proportion</i> of people who help in other studies. There may also be a number of people at which the effect is maximized.)"),
+				new KnowledgeNode(173, DisplayMode.POP, "When you join a new team, document any misunderstandings and things you wish you knew from the start in order to optimize future onboarding."),
+				new KnowledgeNode(174, DisplayMode.POP, "Ensure the existence of brief, overview-level documentation."),
+			]),
 		]), 
 		makeTopLevelCategoryNode("Architecture", [
 			new KnowledgeNode(132, DisplayMode.ITEM, "To-do"),
@@ -607,7 +627,14 @@ document.body.onload = function() {
 			new KnowledgeNode(136, DisplayMode.ITEM, "To-do"),
 		]),
 		makeTopLevelCategoryNode("Testing", [
-			new KnowledgeNode(137, DisplayMode.ITEM, "To-do"),
+			new KnowledgeNode(137, DisplayMode.ITEM, "No matter how minor you think a change is, test again after making it."),
+			new KnowledgeNode(175, DisplayMode.ITEM, "Writing tests before writing production code can be a beneficial practice. <a data-index='0'></a>", [
+				new KnowledgeNode(176, DisplayMode.POP, "Writing tests first is called <a href='https://www.agilealliance.org/glossary/tdd/'>test-driven development.</a>")
+			]),
+			new KnowledgeNode(177, DisplayMode.ITEM, "Complete test coverage is detrimental in most non-safety-critical applications. <a data-index='0'></a> <a data-index='1'></a>", [
+				new KnowledgeNode(178, DisplayMode.POP, "<a href='http://ithare.com/too-much-unit-testing-is-detrimental-for-code-quality/'>The cost of unit testing probably outweighs its benefits after a certain threshold.</a>"),
+				new KnowledgeNode(179, DisplayMode.POP, "<a href='http://ithare.com/testing-my-personal-take-on-testing-including-unit-testing-and-atddbdd/'>ITHare's thoughts on various types of testing</a>"),
+			]),
 		]),
 		makeTopLevelCategoryNode("Publishing", [
 			new KnowledgeNode(138, DisplayMode.ITEM, "To-do"),
@@ -861,7 +888,7 @@ function prepareNotice(message, delay) {
 
 //Updating this project:
 //Update this constant when you add a KnowledgeNode (for the sake of the next person who wants to add KnowledgeNodes or if someone removes the most recently added one that was published):
-const highestUsedId = 159;
+const highestUsedId = 179;
 //Nodes should identify facts, ideas, principles, "best practices," shortcomings, and reasonable alteratives (aiding in pragmatism).
 //Keep reasoning (if more than a few words), more esoteric knowledge (language-, domain-, or algorithm-specific), and examples in out-of-the-way places (like Pop items) while remembering that they may be independently displayed.
 //Due to the vast array of languages, domains, and algorithms in existence, forks of this project (with none of the original KnowledgeNodes) may be necessary for anything that doesn't generalize well.
@@ -878,20 +905,16 @@ Being a great developer requires considering the human aspects of yourself, your
  
 Deflect subtly and play the politics game, keeping the customer's best interests in mind.
 
-Maintaining a healthy body and mind is paramount to being a good developer, and that requires sleep, exercise, nutrition, and ergonomics. Being a considerate person is extremely important, too (see assertion #1 above).
 Guidelines, principles, and best practices are not rules; they're not perfect and are not meant to be the best answer in every situation. What's always best is to weigh your options in context. The same applies for tools, technologies, and methodologies. Additionally, they're very hard to study, so you can't be sure how much they help solely based on speculation of their pros and cons [https://accu.org/index.php/journals/1547]. [Some discussion of the dubious benefits of pair programming: https://accu.org/index.php/journals/1983] [Some discussion of the difficulties involved in agile: https://accu.org/index.php/journals/2003]
 Best practices and principles include KISS [Keep It Stupid-Simple], SOLID [Single Responsibility; Open/Closed; Liskov Substitution; Interface Segregation; Dependency Inversion: https://accu.org/index.php/journals/1957], DRY [Don't Repeat Yourself] [Cases to ignore DRY: https://accu.org/index.php/journals/2662], consistency, loose coupling (and dependency injection), leaky abstractions [https://www.joelonsoftware.com/2002/11/11/the-law-of-leaky-abstractions/], logic and documentation locality... Facts include "nothing is as simple as it seems." [https://www.joelonsoftware.com/2002/03/04/nothing-is-as-simple-as-it-seems/]
 New technologies give you new ways of thinking, so try out a lot of languages and libraries. MATLAB/OCTAVE work with vector operations (SIMD--single instruction multiple data) so you often don't have to loop (see also: LINQ, map, reduce); functional languages like Haskell make you rely less on the program state and more on passing data around; declarative languages like VHDL give you a chance to break out of the sequence mindset.
 Read some books (The Design of Everyday Things Revised and Expanded Edition, https://github.com/accu-org/essential-books/wiki ), and blogs (ITHare.com, GamaSutra, ACCU.org journals, https://devblogs.microsoft.com/oldnewthing/, maybe JoelOnSoftware.com) at different points in your life, not just technology-specific tutorials and articles.
-Make improvement your responsibility. If you join a group and see that they have no overview-level documentation or list of common misunderstandings or anything to help newcomers get up to speed, it'll be helpful to everyone if you choose to be the one to create it.
 Avoid interruptions. Every interruption resets your working memory, leading to a loss of 15-30 minutes of productivity.
 Triple your initial estimates [http://programs.clearerthinking.org/how_well_anchored_are_your_estimates.html] or estimate with a confidence interval [https://accu.org/index.php/journals/1836]. Only make estimates for your own projects [https://www.joelonsoftware.com/2007/10/26/evidence-based-scheduling/], and break down projects that are more than a few days long to estimate them better. It's much easier to estimate how long something will take once you've actually thought about the challenges involved, but your estimates still need padded for bugs, interruptions, and test time.
-Don't try to get even close to 100% automated test coverage in a non-safety-critical application. [http://ithare.com/too-much-unit-testing-is-detrimental-for-code-quality/] [http://ithare.com/testing-my-personal-take-on-testing-including-unit-testing-and-atddbdd/]
 When writing code, especially if you don't have a formal design prepared in advance, write to-do comments explaining the process. You can take off the "TODO" as you complete these, and they become documentation of the intention behind sections of your code. This also serves as a guide and helps if you get interrupted or forget what you were doing.
 Brainstorming consists of coming up with ideas and leaving their evaluation for later. [https://www.managers.org.uk/~/media/Files/Campus%20CMI/Checklists%20PDP/Brainstorming.ashx]
 When you find a need to optimize your code (which requires first benchmarking to identify the slowest parts), first try reducing the run time complexity of the algorithms, such as changing a search into a hash-based lookup. If that proves insufficient, you may have to sacrifice clean, maintainable code for optimization. Compilers, particularly those for more mature programming languages, are very smart and capable of optimizing in a lot of ways, so you probably won't get anything out of simple changes [http://ithare.com/the-importance-of-back-of-envelope-estimates/]. However, compilers do not have problem domain knowledge and are restricted from performing some optimizations due to their general-purpose nature. In some cases, changing a class to a struct may result in a speed increase because it can increase cache locality and reduce redirection. Compilers for less mature languages may be unable to perform common optimizations like loop interchange and tail recursion. [https://en.wikipedia.org/wiki/Optimizing_compiler] [http://ithare.com/optimizing-big-number-arithmetic-without-sse/]
 Fix bugs before implementing new features. Perform a proper root-cause analysis. Bugs can have hard-to-realize underlying causes that could affect new features. Their effects on other existing features could also go unnoticed.
-No matter how minor you think a change is, test again after making it.
 If someone questions a piece of code, add a comment addressing their concern (or rephrase an existing comment if it helps), because chances are good someone else will question it for the same reason eventually.
 Remember your potential numeric ranges and font sizes when designing visuals like pie charts (e.g. how can you fit a label on a 1% sliver?) and raw text displays (word wrap? Word break? Scrolling?).
 **Metrics
