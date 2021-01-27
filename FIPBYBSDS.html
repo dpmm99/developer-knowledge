@@ -561,6 +561,7 @@ document.body.onload = function() {
 					new KnowledgeNode(156, DisplayMode.POP, "<a href='https://blogs.msdn.microsoft.com/gabriel_morgan/2007/03/20/implementing-system-quality-attributes/'>Implementing System Quality Attributes</a>"),
 				]),
 			]),
+			new KnowledgeNode(181, DisplayMode.ITEM, "Work tickets (e.g. JIRA stories) should include justification/reasoning, the current state of affairs, the desired change, and unknowns or undecided factors."),
 		]),
 		makeTopLevelCategoryNode("Leadership", [
 			new KnowledgeNode(101, DisplayMode.ITEM, "Consider the human feelings of those under your lead, but do not forget the project priorities. <a data-index='0'></a>", [
@@ -613,12 +614,17 @@ document.body.onload = function() {
 			new KnowledgeNode(102, DisplayMode.ITEM, "Read a book <a data-index='0'></a> for best results. (This is a temporary item until the category can be fleshed out.)", [
 				new KnowledgeNode(103, DisplayMode.POP, "I recommend <a href='https://www.amazon.com/Design-Everyday-Things-Revised-Expanded-ebook/dp/B00E257T6C'>The Design of Everyday Things</a>."),
 			]),
+			new KnowledgeNode(182, DisplayMode.ACCORDION, "Design in ways that allow you to make use of your toolchain's features.", [
+				new KnowledgeNode(183, DisplayMode.ITEM, "Code generation or multiple language interpolation can allow you to reference the same variables in multiple languages via reflection. <a data-index='0'></a>", [
+					new KnowledgeNode(184, DisplayMode.POP, "Visual Studio's ability to find all references to a class/property/etc. is normally hindered by using JavaScript for some of the code, but with C#, you can use the nameof operator to refer to classes/properties in JavaScript within a Razor file, allowing the IDE to recognize the reference.")
+				]),
+			]),
 		]), 
 		makeTopLevelCategoryNode("Legal", [
 			new KnowledgeNode(133, DisplayMode.ITEM, "To-do"),
 		]),
 		makeTopLevelCategoryNode("Programming", [
-			new KnowledgeNode(134, DisplayMode.ITEM, "To-do"),
+			new KnowledgeNode(134, DisplayMode.ITEM, "Writing comments to indicate what your code will do (and why) before writing the code can help you avoid forgetting steps or edge cases."),
 		]),
 		makeTopLevelCategoryNode("Documenting", [
 			new KnowledgeNode(135, DisplayMode.ITEM, "To-do"),
@@ -635,6 +641,7 @@ document.body.onload = function() {
 				new KnowledgeNode(178, DisplayMode.POP, "<a href='http://ithare.com/too-much-unit-testing-is-detrimental-for-code-quality/'>The cost of unit testing probably outweighs its benefits after a certain threshold.</a>"),
 				new KnowledgeNode(179, DisplayMode.POP, "<a href='http://ithare.com/testing-my-personal-take-on-testing-including-unit-testing-and-atddbdd/'>ITHare's thoughts on various types of testing</a>"),
 			]),
+			new KnowledgeNode(180, DisplayMode.ITEM, "Unit tests should not access external systems such as databases."),
 		]),
 		makeTopLevelCategoryNode("Publishing", [
 			new KnowledgeNode(138, DisplayMode.ITEM, "To-do"),
@@ -888,7 +895,7 @@ function prepareNotice(message, delay) {
 
 //Updating this project:
 //Update this constant when you add a KnowledgeNode (for the sake of the next person who wants to add KnowledgeNodes or if someone removes the most recently added one that was published):
-const highestUsedId = 179;
+const highestUsedId = 184;
 //Nodes should identify facts, ideas, principles, "best practices," shortcomings, and reasonable alteratives (aiding in pragmatism).
 //Keep reasoning (if more than a few words), more esoteric knowledge (language-, domain-, or algorithm-specific), and examples in out-of-the-way places (like Pop items) while remembering that they may be independently displayed.
 //Due to the vast array of languages, domains, and algorithms in existence, forks of this project (with none of the original KnowledgeNodes) may be necessary for anything that doesn't generalize well.
@@ -917,6 +924,9 @@ When you find a need to optimize your code (which requires first benchmarking to
 Fix bugs before implementing new features. Perform a proper root-cause analysis. Bugs can have hard-to-realize underlying causes that could affect new features. Their effects on other existing features could also go unnoticed.
 If someone questions a piece of code, add a comment addressing their concern (or rephrase an existing comment if it helps), because chances are good someone else will question it for the same reason eventually.
 Remember your potential numeric ranges and font sizes when designing visuals like pie charts (e.g. how can you fit a label on a 1% sliver?) and raw text displays (word wrap? Word break? Scrolling?).
+Writing things server-side makes it harder to turn around and make a reactive web page (e.g. ASP MVC doesn't really play nicely with AJAX requests; Razor is often better used to generate code with Reflection than to build HTML), unless the server and client use the same language (1 point for Node.js)
+Learning things outside your role can improve your performance in your role: https://docs.microsoft.com/en-us/archive/blogs/gabriel_morgan/skills-from-different-experiences-well-rounded-is-king
+Singletons don't work well for testing; it's nice to have them get made automatically at startup (i.e. with a static constructor), but then you can't switch them to a mock version for unit tests without more work. Factories should be used sparingly; when used unnecessarily, they only serve to increase the complexity of constructing an object. The observer pattern is just a special case of an event. The Template and Strategy patterns are more like a way of deciding on events to raise. Criticisms of design patterns as a whole are also good to consider (as are, of course, their praises): https://sourcemaking.com/design_patterns
 **Metrics
 **Requirements elicitation (ambiguity is the greatest evil), requirements documents, requirements tracking
 **Job hunting
